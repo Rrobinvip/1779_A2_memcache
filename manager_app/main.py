@@ -5,7 +5,7 @@ import requests
 from glob import escape
 
 # Import Forms
-from manager_app.form import ConfigForm, ClearForm, DeleteForm, ManualForm
+from manager_app.form import ConfigForm, ClearForm, DeleteForm, ManualForm, AutoForm
 
 # Import helper
 from manager_app.helper import api_call
@@ -103,3 +103,49 @@ def manual_resizing():
         return redirect(url_for("manual_resizing"))
 
     return render_template("manual.html", form1=manual_form, status_dic=status_dic)
+
+@app.route("/automatic", methods=["GET", "POST"])
+def automatic_resizing():
+    auto_policy_form = AutoForm()
+
+    status_dic = aws_controller.get_instances_status()
+
+    if request.method == "POST" and auto_policy_form.validate_on_submit():
+        choice = auto_policy_form.auto_resizing_policy.data
+
+        # TODO:
+        # Make api call to scaler to update auto resizing policy
+        flash("Choice is {}".format(choice))
+
+        return redirect(url_for("automatic_resizing"))
+
+    return render_template("auto.html", form1=auto_policy_form, status_dic=status_dic)
+
+@app.route("/delete", methods=["GET", "POST"])
+def delete_data():
+    delete_form = DeleteForm()
+
+    if request.method == "POST" and delete_form.validate_on_submit():
+        ip_address = aws_controller.get_ip_address()
+
+        for i in ip_address:
+            # TODO make api call to clear data
+            print(i)
+    
+    aws_controller.clear_s3()
+    aws_controller.clear_RDS()
+
+    return render_template("delete.html", form2=delete_form, tag3_selected=True)
+
+@app.route("/clear_memcache", methods=["GET", "POST"])
+def clear_memcache():
+    clear_form = ClearForm()
+
+    if request.method == "POST" and clear_form.validate_on_submit():
+        ip_address = aws_controller.get_ip_address()
+
+        for i in ip_address:
+            # TODO make api call to clear data
+            print(i)
+
+    return render_template("clear.html", form2=clear_form, tag4_selected=True)

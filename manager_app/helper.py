@@ -4,12 +4,12 @@ import os
 import base64
 from datetime import datetime
 
-def api_call(type, commend, params=None):
+def api_call(ipv4, type, commend, params=None):
     '''
     This function is used to use the api. \n
     The flag will need to be updated in the future to accommodate different api's.
     '''
-    request_url = "http://127.0.0.1:5000/backend/"
+    request_url = "http://{}".format(ipv4)
     url = request_url+commend
     print(" - Frontend.helper.api_call: ", url)
     if type == "GET":

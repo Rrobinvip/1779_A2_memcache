@@ -24,6 +24,16 @@ class ConfigForm(FlaskForm):
     )
     submit = SubmitField("Apply")
 
+class AutoForm(FlaskForm):
+    auto_resizing_policy = SelectField(
+        "auto_resizing_policy",
+        choices=[(1, "Max Miss Rate threshold"), 
+                 (2, "Min Miss Rate threshold"), 
+                 (3, "Ratio by which to expand the pool"), 
+                 (4, "Ratio by which to shrink the pool")]
+    )
+    submit = SubmitField("Apply")
+
 class ManualForm(FlaskForm):
     growing = SubmitField("Growing")
     shrinking = SubmitField("Shrinking")
