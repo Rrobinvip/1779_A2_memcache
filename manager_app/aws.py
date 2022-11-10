@@ -103,3 +103,24 @@ class AWSController:
                 return {"status_code":200, "operation_type":"ratio growing/shrinking", "message":"operation success"}
             else:
                 return {"status_code":400, "operation_type":"ratio growing/shrinking", "message":"operation failed"}
+
+    def get_ip_address(self):
+        self.reload_instance_status()
+
+        result = {}
+
+        for i in self.instance_list:
+            if i.state['Name'] != 'running':
+                result.update({i.id:'0.0.0.0'})
+            else:
+                result.update({i.id:i.public_ip_address})
+        
+        return result
+
+    def clear_s3(self):
+        # TODO: remove all data inside S3.
+        return 1
+
+    def clear_RDS(self):
+        # TODO: remove all entries from RDS.
+        return 1

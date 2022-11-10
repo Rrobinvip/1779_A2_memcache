@@ -1,5 +1,7 @@
 # ECE 1779 A2 MEMCACHE - Group 17
 
+Nodes will run this flask instance to storage picture. [Node server](https://github.com/Rrobinvip/1779_A2_NodeServer)
+
 ## General requirements
 1. do not consider node failures, no need to be fault tolerant
 

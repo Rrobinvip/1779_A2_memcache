@@ -52,7 +52,7 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="{{ url_for('manual_resizing') }}">Manual Mode</a>
-                            <a class="dropdown-item" href="#">Automatic</a>
+                            <a class="dropdown-item" href="{{ url_for('automatic_resizing') }}">Automatic</a>
                             <!-- <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="#">Something else here</a> -->
                         </div>
@@ -61,22 +61,22 @@
                     <!-- TODO: Complete url_for() -->
                     {% if tag3_selected %}
                     <li class="nav-item active">
-                        <a class="nav-link active" href="#"> Deleting all data </a>
+                        <a class="nav-link active" href="{{ url_for('delete_data') }}"> Deleting all data </a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#"> Deleting all data </a>
+                        <a class="nav-link" href="{{ url_for('delete_data') }}"> Deleting all data </a>
                     </li>
                     {% endif %}
                     
                     <!-- TODO: Complete url_for() -->
                     {% if tag4_selected %}
                     <li class="nav-item active">
-                        <a class="nav-link active" href="#"> Clean memcache </a>
+                        <a class="nav-link active" href="{{ url_for('clear_memcache') }}"> Clean memcache </a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#"> Clean memcache </a>
+                        <a class="nav-link" href="{{ url_for('clear_memcache') }}"> Clean memcache </a>
                     </li>
                     {% endif %}
                 </ul>
