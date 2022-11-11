@@ -11,7 +11,7 @@ def api_call(ipv4, type, commend, params=None):
     '''
     request_url = "http://{}".format(ipv4)
     url = request_url+commend
-    print(" - Frontend.helper.api_call: ", url)
+    print(" - Manager.helper.api_call: ", url)
     if type == "GET":
         return requests.get(url, params, timeout=0.5)
     elif type == "POST":
