@@ -27,10 +27,15 @@ from frontend.form import ConfigForm
 from frontend.form import ClearForm
 
 # Helper
-from frontend.helper import api_call, api_image_store, allowed_file
+from frontend.helper import api_call, api_image_store, allowed_file, remove_file
 
 # Encode and decode img
 from frontend.helper import write_img_local, image_encoder, current_datetime
+
+# AWS Controller
+from frontend.aws import AWSController
+from manager_app.config import Config
+aws_controller = AWSController()
 
 
 sql_connection = Data()
@@ -85,7 +90,15 @@ def upload_picture():
 
     if request.method == "POST" and picture_form.validate_on_submit():
         filename = pictures.save(picture_form.pictures.data)
+
+        # # Make filename unique
+        # date_prefix = current_datetime()
+        # filename = date_prefix+filename
+
         key = picture_form.key.data
+
+        # Upload the file to s3.
+        aws_controller.add_file_s3(filename)
 
         # Frontend will encode the image into a string, and pass it to backend as a value. 
         value = image_encoder(filename)
@@ -102,6 +115,9 @@ def upload_picture():
         flash("Upload success")
         print(filename, key)
         sql_connection.add_entry(key, filename)
+
+        # Remove file from s3
+        remove_file(filename)
         return redirect(url_for("upload_picture"))
     
     return render_template("upload.html", form=picture_form)
@@ -146,10 +162,15 @@ def search_key():
                 upload_time = data[0][3]
                 print("Filename: {} upload_time: {}".format(filename, upload_time))
 
+                aws_controller.download_file(filename)
+
                 # When data is retrieved from DB, add it to memcache.
                 value = image_encoder(filename)
                 parms = {"key":key, "value":value, "upload_time":upload_time}
                 result = api_call("POST", "put", parms)
+                
+
+                filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
 
                 if result.status_code == 200:
                     print(" - Frontend: backend stores image into memcache.")
@@ -191,10 +212,14 @@ def search_key():
                 upload_time = data[0][3]
                 print("Filename: {} upload_time: {}".format(filename, upload_time))
 
+                aws_controller.download_file(filename)
+
                 # When data is retrieved from DB, add it to memcache.
                 value = image_encoder(filename)
                 parms = {"key":key, "value":value, "upload_time":upload_time}
                 result = api_call("POST", "put", parms)
+
+                filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
 
                 if result.status_code == 200:
                     print(" - Frontend: backend stores image into memcache.")
@@ -232,7 +257,13 @@ def all_pairs():
     Show all pairs. 
     '''
     data = sql_connection.inspect_all_entries()
-    return render_template("all_pairs.html", items=data, tag2_selected=True)
+
+    image_url = []
+
+    for i,item in enumerate(data):
+        image_url.append('https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, data[i][2]))
+
+    return render_template("all_pairs.html", items=data, tag2_selected=True, url_list=image_url)
 
 
 @app.route("/config", methods=["GET", "POST"])

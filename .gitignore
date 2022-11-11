@@ -10,6 +10,7 @@ __pycache__/
 # Project dir
 frontend/static/uploads
 frontend/static/local_cache
+frontend/static/s3_download
 
 # C extensions
 *.so

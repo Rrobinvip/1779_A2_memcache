@@ -1,5 +1,5 @@
 import requests
-from frontend.config import LOCAL_CACHE_DIR, LOCAL_UPLOADS_DIR, ALLOWED_EXTENSIONS
+from frontend.config import LOCAL_CACHE_DIR, LOCAL_UPLOADS_DIR, ALLOWED_EXTENSIONS, LOCAL_S3_DL_DIR
 import os
 import base64
 from datetime import datetime
@@ -16,6 +16,10 @@ def api_call(type, commend, params=None):
         return requests.get(url, params, timeout=0.5)
     elif type == "POST":
         return requests.post(url, params, timeout=0.5)
+
+def remove_file(filename):
+    final_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+    os.remove(final_path)
 
 def write_img_local(filename, decode_value):
     '''
@@ -35,7 +39,7 @@ def image_encoder(filename):
     This function is used to create a encoded string with given image.
      - filename: The name of the file used to store the image.
     '''
-    final_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+    final_path = os.path.join(LOCAL_S3_DL_DIR, filename)
     file = open(final_path, "rb")
     encode_string = base64.b64encode(file.read())
     return encode_string

@@ -4,6 +4,7 @@ TEMPLATE_DIR = os.path.abspath("./frontend/templates")
 STATIC_DIR = os.path.abspath("./frontend/static")
 LOCAL_CACHE_DIR = os.path.abspath("./frontend/static/local_cache")
 LOCAL_UPLOADS_DIR = os.path.abspath("./frontend/static/uploads")
+LOCAL_S3_DL_DIR = os.path.abspath("./frontend/static/s3_download")
 ALLOWED_EXTENSIONS = {'jpg', 'jpe', 'jpeg', 'png', 'gif', 'svg', 'bmp', 'webp'}
 
 class Config(object):
