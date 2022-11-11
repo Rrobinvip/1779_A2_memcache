@@ -22,7 +22,7 @@
                     <td>{{item[1]}}</td>
                     <td>{{item[2]}}</td>
                     <td>{{item[3]}}</td>
-                    <td><img class="img" style="width:200px;" src="{{ url_for('static', filename='uploads/'+item[2]) }}" alt=""></td>
+                    <td><img class="img" style="width:200px;" src="{{ url_list[loop.index0] }}" alt=""></td>
                 </tr>
                 {% endfor %}
             </tbody>
