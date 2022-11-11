@@ -105,6 +105,9 @@ class AWSController:
                 return {"status_code":400, "operation_type":"ratio growing/shrinking", "message":"operation failed"}
 
     def get_ip_address(self):
+        '''
+        Return a dict of **running** instances.
+        '''
         self.reload_instance_status()
 
         result = {}

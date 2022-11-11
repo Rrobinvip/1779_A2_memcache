@@ -130,3 +130,8 @@ def status():
     data = sql_connection.get_stat_data()
     return data, 200
 
+@app.route('/get_config', methods=['GET'])
+def get_config():
+    # spces = sql_connection.get_config_data()
+    spces = [[0, 300, 2]]
+    return spces

@@ -42,14 +42,16 @@ def memcache_config():
     if request.method == "GET" and "size" in request.args and "policy" in request.args:
         size = escape(request.args.get("size"))
         choice = escape(request.args.get("choice", type=int))
-        parms = {"size":size, "replacement_policy":choice}
-        # result = api_call("GET", "config", parms)
 
-        # if result.status_code == 200:
-        #     flash("Update success")
-        # else: 
-        #     flash("Update failed")
+        parms = {"size":size, "replacement_policy":choice}
+
+        ip_dic = aws_controller.get_ip_address()
+        for i, e in enumerate(list(ip_dic.values())):
+            url = e+":5000/"
+            result = api_call(url, "GET", "config", parms)
+        
         flash("Update success")
+
         return redirect(url_for("memcache_config"))
 
     elif request.method == "POST" and config_form.validate_on_submit():
@@ -57,22 +59,23 @@ def memcache_config():
         choice = config_form.replacement_policy.data
 
         parms = {"size":size, "replacement_policy":choice}
-        # result = api_call("GET", "config", parms)
 
-        # if result.status_code == 200:
-        #     flash("Update success")
-        # else: 
-        #     flash("Update failed")
+        ip_dic = aws_controller.get_ip_address()
+        for i, e in enumerate(list(ip_dic.values())):
+            url = e+":5000/"
+            result = api_call(url, "GET", "config", parms)
+        
         flash("Update success")
+
         return redirect(url_for("memcache_config"))
 
     if request.method == "POST" and clear_form.validate_on_submit():
-        # result = api_call("GET", "clear")
 
-        # if result.status_code == 200:
-        #     flash("memcache cleared")
-        # else: 
-        #     flash("Update failed")
+        ip_dic = aws_controller.get_ip_address()
+        for i, e in enumerate(list(ip_dic.values())):
+            url = e+":5000/"
+            result = api_call(url, "GET", "clear")
+        
         flash("memcache cleared")
         return redirect(url_for("memcache_config"))
         
@@ -128,9 +131,10 @@ def delete_data():
     if request.method == "POST" and delete_form.validate_on_submit():
         ip_address = aws_controller.get_ip_address()
 
-        for i in ip_address:
-            # TODO make api call to clear data
-            print(i)
+        for i, e in enumerate(list(ip_address.values())):
+            url = e+":5000/"
+            result = api_call(url, "GET", "clear")
+            print(e)
     
     aws_controller.clear_s3()
     aws_controller.clear_RDS()
@@ -144,8 +148,23 @@ def clear_memcache():
     if request.method == "POST" and clear_form.validate_on_submit():
         ip_address = aws_controller.get_ip_address()
 
-        for i in ip_address:
-            # TODO make api call to clear data
-            print(i)
+        for i, e in enumerate(list(ip_address.values())):
+            url = e+":5000/"
+            result = api_call(url, "GET", "clear")
+            print(e)
 
     return render_template("clear.html", form2=clear_form, tag4_selected=True)
+
+
+# For api calls to nodes.
+
+@app.route("/api/get_config", methods=["GET"])
+def api_get_config():
+    if request.method == "GET":
+        # TODO: manager should ask RDS for leatest config. Now just mock it up. 
+        size = 100  # From RDS
+        choice = 1  # From RDS
+
+        # config [0][1] for size, [0][2] policy. From database.
+        config = api_call("localhost:5000/backend/", "GET", "get_config").json()
+        return jsonify({'size':config[0][1], 'replace_policy':config[0][2]}), 200
