@@ -4,6 +4,19 @@ import os
 import base64
 from datetime import datetime
 
+def api_call_ipv4(ipv4, type, commend, params=None):
+    '''
+    This function is used to use the api. \n
+    The flag will need to be updated in the future to accommodate different api's.
+    '''
+    request_url = "http://{}".format(ipv4)
+    url = request_url+'/'+commend
+    print(" - Manager.helper.api_call: ", url)
+    if type == "GET":
+        return requests.get(url, params, timeout=0.5)
+    elif type == "POST":
+        return requests.post(url, params, timeout=0.5)
+
 def api_call(type, commend, params=None):
     '''
     This function is used to use the api. \n
@@ -18,7 +31,17 @@ def api_call(type, commend, params=None):
         return requests.post(url, params, timeout=0.5)
 
 def remove_file(filename):
+    '''
+    Remove file at LOCAL_UPLOADS_DIR
+    '''
     final_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+    os.remove(final_path)
+
+def remove_s3_cache(filename):
+    '''
+    Remove file at LOCAL_S3_DL_DIR
+    '''
+    final_path = os.path.join(LOCAL_S3_DL_DIR, filename)
     os.remove(final_path)
 
 def write_img_local(filename, decode_value):
@@ -34,12 +57,19 @@ def write_img_local(filename, decode_value):
     file.write(image_decode)
     file.close
 
-def image_encoder(filename):
+def image_encoder(filename, loc):
     '''
     This function is used to create a encoded string with given image.
      - filename: The name of the file used to store the image.
+     - loc: str, 's3', 'uploads', 'cache'.
     '''
-    final_path = os.path.join(LOCAL_S3_DL_DIR, filename)
+    if loc == 's3':
+        final_path = os.path.join(LOCAL_S3_DL_DIR, filename)
+    elif loc == 'uploads':
+        final_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+    else:
+        final_path = os.path.join(LOCAL_CACHE_DIR, filename)
+    
     file = open(final_path, "rb")
     encode_string = base64.b64encode(file.read())
     return encode_string

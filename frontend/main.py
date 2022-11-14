@@ -27,7 +27,7 @@ from frontend.form import ConfigForm
 from frontend.form import ClearForm
 
 # Helper
-from frontend.helper import api_call, api_image_store, allowed_file, remove_file
+from frontend.helper import api_call, api_image_store, allowed_file, remove_file, api_call_ipv4, remove_s3_cache
 
 # Encode and decode img
 from frontend.helper import write_img_local, image_encoder, current_datetime
@@ -35,10 +35,19 @@ from frontend.helper import write_img_local, image_encoder, current_datetime
 # AWS Controller
 from frontend.aws import AWSController
 from manager_app.config import Config
+
+# Hash Mapper
+from frontend.pool_hashing import PoolHashingAllocator
+
+'''
+**IMPORTANT!** instances doesn't updat their status automatically. Call `aws_controller.reload_instance_status()` every time befroe any
+operations on instance. Also updating running_instance with `aws_controller.get_ip_address` is mandetory. 
+'''
 aws_controller = AWSController()
-
-
 sql_connection = Data()
+
+running_instance = aws_controller.get_ip_address()
+hash_mapper = PoolHashingAllocator(len(running_instance))
 
 @app.before_first_request
 def start():
@@ -85,8 +94,13 @@ def upload_picture():
         * key
         * base64 encoded value of image
         * upload_time
+
+    If no running instances, all image will only go S3.
     '''
     picture_form = UploadForm()
+
+    running_instance = aws_controller.get_ip_address()
+    hash_mapper.set_number_nodes(len(running_instance))
 
     if request.method == "POST" and picture_form.validate_on_submit():
         filename = pictures.save(picture_form.pictures.data)
@@ -97,19 +111,28 @@ def upload_picture():
 
         key = picture_form.key.data
 
+        instance_index_to_assign_key_value = hash_mapper.get_hash_region(key)
+
         # Upload the file to s3.
         aws_controller.add_file_s3(filename)
 
         # Frontend will encode the image into a string, and pass it to backend as a value. 
-        value = image_encoder(filename)
+        value = image_encoder(filename, 'uploads')
         upload_time = current_datetime()
         parms = {"key":key, "value":value, "upload_time":upload_time}
+
+        if len(running_instance) == 0:
+            print(" - Frontend.main.upload_picture : No running instances. Image will go to S3. {}".format(len(running_instance)))
+        else:
+            print(" - Frontend.main.upload_picture : running instances. {}".format(running_instance))
         result = api_call("POST", "put", parms)
+        # Test locally with line 121, with nodes with line 123.
+        # reuslt = api_call_ipv4(running_instance[instance_index_to_assign_key_value], "POST", "put", parms)
 
         if result.status_code == 200:
             print(" - Frontend: backend stores image into memcache.")
         else:
-            print(" - Frontend: memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored locally. ")
+            print(" - Frontend: memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored in S3. ")
 
         # After update it with the memcache, frontend will add filename and key into db. 
         flash("Upload success")
@@ -134,12 +157,18 @@ def search_key():
 
     Image from SQL (filename) will be directly retrieved from `/static/uploads`, image from memcache will be decoded and stored in 
     `/static/local_cache`. Image must be cached locally to be rendered in HTML. 
+
+    If no running instances, all image will be searched in RDS. 
     '''
     search_form = SearchForm()
     filename = None
     upload_time = None
     key = None
     cache_flag = False
+
+    running_instance = aws_controller.get_ip_address()
+    hash_mapper.set_number_nodes(len(running_instance))
+    instance_index_to_search = None
 
     print("* Search init...")
  
@@ -148,7 +177,13 @@ def search_key():
         key = escape(request.args.get("key"))
         # Call backend
         print(" - Frontend.main.search_key : Searching in memcache..")
+
+        instance_index_to_search = hash_mapper.get_hash_region(key)
+
         data = api_call("GET", "get", {"key":key})
+        # To use nodes.
+        # data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
+        print(" - Fronted.main.search_key : Instance index to search is {}".format(instance_index_to_search))
 
         # If the backend misses, look up the database. If the backend hits, decrypt the image and store it
         if data.status_code == 400:
@@ -165,11 +200,12 @@ def search_key():
                 aws_controller.download_file(filename)
 
                 # When data is retrieved from DB, add it to memcache.
-                value = image_encoder(filename)
+                value = image_encoder(filename, 's3')
                 parms = {"key":key, "value":value, "upload_time":upload_time}
                 result = api_call("POST", "put", parms)
-                
 
+                remove_s3_cache(filename)
+                
                 filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
 
                 if result.status_code == 200:
@@ -195,7 +231,13 @@ def search_key():
 
         # Call backend
         print(" - Frontend.main.search_key : Searching in memcache..")
+
+        instance_index_to_search = hash_mapper.get_hash_region(key)
+
         data = api_call("GET", "get", {"key":key})
+        # To use nodes.
+        # data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
+
 
         # This part, where requesting data from memcache, is exactly same as above. Becaause I don't have any good 
         # ideas to put them into a function. 
@@ -215,9 +257,11 @@ def search_key():
                 aws_controller.download_file(filename)
 
                 # When data is retrieved from DB, add it to memcache.
-                value = image_encoder(filename)
+                value = image_encoder(filename, 's3')
                 parms = {"key":key, "value":value, "upload_time":upload_time}
                 result = api_call("POST", "put", parms)
+
+                remove_s3_cache(filename)
 
                 filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
 
@@ -330,6 +374,27 @@ def memcache_status():
 
     return render_template("status.html", items=data, tag4_selected=True)
 
+@app.route('/api/pool_size_notify', methods=['GET'])
+def pool_size_update():
+    '''
+    This method allows frontend to be notified when pool size changed. 
+    '''
+    print(" - Frontend.main : pools_size_update called.")
+    print(" - Frontend.main : pool_size_update, current running ips:{}".format(aws_controller.get_ip_address()))
+
+    if request.method == 'GET' and 'size' in request.args:
+        size = int(request.args.get('size'))
+        if size < 0 or size > 8:
+            print(" - Frontend.main : Incoming size incorrect")
+            return jsonify({"Message":"Operation failed"}), 400
+        
+        # Obtain a new list of running instance is ignored here because instance doesn't boot or stop that quick.
+        # Pending instances will not be counted as running instances.
+        hash_mapper.set_number_nodes(size)
+        return jsonify({"Message":"Size updated"}), 200
+
+    return jsonify({"Message":"Operation failed"}), 400
+
 @app.route("/api/list_keys", methods= ['POST'])
 def api_list_keys():
     '''
@@ -367,7 +432,11 @@ def api_key_search(key_value):
         #if the key exists in database, retrive it from local file system
         else:
             filename = result[0][2]
-            content = image_encoder(filename)
+
+            # Download file from s3.
+            aws_controller.download_file(filename)
+
+            content = image_encoder(filename, 's3')
             content = content.decode()
             return jsonify({
                 "success":"true",
@@ -409,7 +478,7 @@ def api_upload():
         api_image_store(file,filename)
         
         #front will encode the image and pass it to backend
-        value = image_encoder(filename)
+        value = image_encoder(filename, 'uploads')
         upload_time = current_datetime()
         parms = {"key":key,"value":value,"upload_time":upload_time}
         result = api_call("POST","put",parms)
@@ -506,7 +575,9 @@ def api_nocache_key_search(key_value):
         })
     else:
         filename = result[0][2]
-        content = image_encoder(filename).decode()
+
+        aws_controller.download_file(filename)
+        content = image_encoder(filename, 's3').decode()
         return jsonify({
             "success":"true",
             "content":content

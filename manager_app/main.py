@@ -99,6 +99,7 @@ def manual_resizing():
 
         if result['status_code'] == 200:
             flash("Operation success")
+            api_call("127.0.0.1:5000/", "GET", "api/pool_size_notify", {"size":len(aws_controller.get_ip_address())})
         else:
             flash("Operation failed.\nReasons can be either: No more intsances to stop/All instances are already running/Some pending instances.")
         

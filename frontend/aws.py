@@ -122,6 +122,20 @@ class AWSController:
         result = {}
 
         for i in self.instance_list:
+            if i.state['Name'] == 'running':
+                result.update({i.id:i.public_ip_address})
+        
+        return result
+    
+    def get_ip_address_all(self):
+        '''
+        Return a dict of all instances.
+        '''
+        self.reload_instance_status()
+
+        result = {}
+
+        for i in self.instance_list:
             if i.state['Name'] != 'running':
                 result.update({i.id:'0.0.0.0'})
             else:
