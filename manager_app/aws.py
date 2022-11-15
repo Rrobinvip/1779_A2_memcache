@@ -1,10 +1,18 @@
 import boto3
 from manager_app.config import Config
+from frontend.config import LOCAL_UPLOADS_DIR, LOCAL_CACHE_DIR, LOCAL_S3_DL_DIR
+import os
 
 class AWSController:
     ec2_resource = None
     ec2_client = None
     instance_list = None
+
+    s3_resource = None
+    s3_client = None
+    bucket = None
+
+    master_instance = None
 
     def __init__(self):
         '''
@@ -14,6 +22,10 @@ class AWSController:
         self.ec2_resource = boto3.resource('ec2', region_name='us-east-1')
         self.ec2_client = boto3.client('ec2', region_name='us-east-1')
         self.instance_list = [self.ec2_resource.Instance(i) for i in Config.INSTANCE_ID]
+        self.s3_resource = boto3.resource('s3', region_name='us-east-1')
+        self.s3_client = boto3.client('s3', region_name='us-east-1')
+        self.bucket = self.s3_resource.Bucket(Config.BUCKET_NAME)
+        self.master_instance = self.ec2_resource.Instance(Config.MASTER_INSTANCE_ID)
 
     def reload_instance_status(self):
         '''
@@ -21,6 +33,7 @@ class AWSController:
         '''
         for i in self.instance_list:
             i.reload()
+        self.master_instance.reload()
 
     def get_instances_status(self):
         '''
@@ -134,10 +147,29 @@ class AWSController:
         
         return result
 
+    def get_master_instance_ip_address(self):
+        self.reload_instance_status()
+        return self.master_instance.public_ip_address
+
     def clear_s3(self):
         # TODO: remove all data inside S3.
+        s3_bucket = self.s3_resource.Bucket('1779-g17-test-1')
+        bucket_versioning = self.s3_resource.BucketVersioning('1779-g17-test-1')
+        if bucket_versioning.status == 'Enabled':
+            s3_bucket.object_versions.delete()
+        else:
+            s3_bucket.objects.all().delete()
+
         return 1
 
     def clear_RDS(self):
         # TODO: remove all entries from RDS.
         return 1
+
+    def add_file_s3(self, filename):
+        final_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+        self.s3_client.upload_file(final_path, Config.BUCKET_NAME, filename)
+        
+    def download_file(self, filename):
+        final_path = os.path.join(LOCAL_S3_DL_DIR, filename)
+        self.s3_client.download_file(Config.BUCKET_NAME, filename, final_path)

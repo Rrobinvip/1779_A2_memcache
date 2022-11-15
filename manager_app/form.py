@@ -25,6 +25,14 @@ class ConfigForm(FlaskForm):
     submit = SubmitField("Apply")
 
 class AutoForm(FlaskForm):
+    threshold = IntegerField(
+        "size",
+        validators=[
+            DataRequired(),
+            NumberRange(min=1, max=100)
+        ],
+        render_kw={"placeholder": "Percent (Dont put '%' sign"}
+    )
     auto_resizing_policy = SelectField(
         "auto_resizing_policy",
         choices=[(1, "Max Miss Rate threshold"), 

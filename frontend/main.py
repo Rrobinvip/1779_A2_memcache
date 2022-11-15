@@ -39,6 +39,9 @@ from manager_app.config import Config
 # Hash Mapper
 from frontend.pool_hashing import PoolHashingAllocator
 
+# Get master ip
+from ec2_metadata import ec2_metadata
+
 '''
 **IMPORTANT!** instances doesn't updat their status automatically. Call `aws_controller.reload_instance_status()` every time befroe any
 operations on instance. Also updating running_instance with `aws_controller.get_ip_address` is mandetory. 
@@ -64,6 +67,14 @@ def start():
 @app.route('/')
 def main():
     return redirect(url_for("upload_picture"))
+
+@app.route('/go_manager')
+def go_manager():
+    ip = aws_controller.get_master_instance_ip_address()
+    if ip == None:
+        ip = 'localhost'
+    url = ip+"/manager"
+    return redirect(url)
 
 #This function is front back call example
 @app.route('/test')
@@ -102,7 +113,10 @@ def upload_picture():
     running_instance = aws_controller.get_ip_address()
     hash_mapper.set_number_nodes(len(running_instance))
 
+    result = None
+
     if request.method == "POST" and picture_form.validate_on_submit():
+        print(" * Upload init...")
         filename = pictures.save(picture_form.pictures.data)
 
         # # Make filename unique
@@ -121,20 +135,25 @@ def upload_picture():
         upload_time = current_datetime()
         parms = {"key":key, "value":value, "upload_time":upload_time}
 
-        if len(running_instance) == 0:
-            print(" - Frontend.main.upload_picture : No running instances. Image will go to S3. {}".format(len(running_instance)))
+        # result = api_call("POST", "put", parms)
+        # Test locally with above, with nodes with below.
+        if instance_index_to_assign_key_value != -1:
+            print(" - Frontend.main.upload : index of instance to upload at {} in {}".format(instance_index_to_assign_key_value, running_instance))
+            connection_test_result = api_call_ipv4(running_instance[instance_index_to_assign_key_value], "GET", "test")
+            if connection_test_result == 200:
+                print(" - Frontend.main.upload_picture : connection to desire instance at {} success, start to upload picture.".format(running_instance[instance_index_to_assign_key_value]))
+                result = api_call_ipv4(running_instance[instance_index_to_assign_key_value], "POST", "put", parms)
+            else:
+                print(" - Frontend.main.upload_picture : Cannot establish connection to {}, abort.".format(running_instance[instance_index_to_assign_key_value]))
         else:
-            print(" - Frontend.main.upload_picture : running instances. {}".format(running_instance))
-        result = api_call("POST", "put", parms)
-        # Test locally with line 121, with nodes with line 123.
-        # reuslt = api_call_ipv4(running_instance[instance_index_to_assign_key_value], "POST", "put", parms)
+            print(" - Frontend.main.upload_picture : No running instances. Image will go to S3. # running instance: {}".format(len(running_instance)))
 
-        if result.status_code == 200:
-            print(" - Frontend: backend stores image into memcache.")
+        if result != None and result.status_code == 200:
+            print(" - Frontend.main.upload_picture : backend stores image into memcache.")
         else:
-            print(" - Frontend: memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored in S3. ")
+            print(" - Frontend.main.upload_picture : memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored in S3. ")
 
-        # After update it with the memcache, frontend will add filename and key into db. 
+        # After update it with the memcache, frontend will add filename and key into db. Upload is always success because it will go to S3 eventually. 
         flash("Upload success")
         print(filename, key)
         sql_connection.add_entry(key, filename)
@@ -170,23 +189,38 @@ def search_key():
     hash_mapper.set_number_nodes(len(running_instance))
     instance_index_to_search = None
 
-    print("* Search init...")
+    data = None
+    connection_test_result = None
+
+    print(" * Search init...")
  
     # Get key through different approaches. 
     if (request.method == "GET" and "key" in request.args):
         key = escape(request.args.get("key"))
         # Call backend
+    elif request.method == "POST" and search_form.validate_on_submit():
+        key = search_form.key.data
+    
+    if key != None:
         print(" - Frontend.main.search_key : Searching in memcache..")
-
         instance_index_to_search = hash_mapper.get_hash_region(key)
 
-        data = api_call("GET", "get", {"key":key})
+        # data = api_call("GET", "get", {"key":key})
+        if instance_index_to_search != -1:
+            print(" - Frontend.main.search : index of instance to search at {} in {}".format(instance_index_to_search, running_instance))
+            connection_test_result = api_call_ipv4(running_instance[instance_index_to_search], "GET", "test")
+            if connection_test_result == 200:
+                print(" - Frontend.main.search : connection to desire instance at {} success, start to search picture.".format(running_instance[instance_index_to_search]))
+                data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
+            else:
+                print(" - Frontend.main.search : Cannot establish connection to {}, abort.".format(running_instance[instance_index_to_search]))
+        else:
+            print(" - Frontend.main.search: No running instances, search in DB only.")
         # To use nodes.
         # data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
-        print(" - Fronted.main.search_key : Instance index to search is {}".format(instance_index_to_search))
 
         # If the backend misses, look up the database. If the backend hits, decrypt the image and store it
-        if data.status_code == 400:
+        if (data != None and data.status_code == 400) or data == None:
             print("\t Backend doesn't hold this value, try search in DB..")
             data = sql_connection.search_key(key)
             if len(data) == 0:
@@ -213,7 +247,7 @@ def search_key():
                 else:
                     print(" - Frontend: memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored locally. ")
 
-        elif data.status_code == 200:
+        elif data != None and data.status_code == 200:
             data = data.json()
             value = data["value"]
             upload_time = data["upload_time"]
@@ -226,67 +260,7 @@ def search_key():
             write_img_local(filename, value)
             cache_flag = True
             print(" - Frontend.main.search_key: v:Filename: {} v:upload_time: {}".format(filename, upload_time))
-    elif request.method == "POST" and search_form.validate_on_submit():
-        key = search_form.key.data
-
-        # Call backend
-        print(" - Frontend.main.search_key : Searching in memcache..")
-
-        instance_index_to_search = hash_mapper.get_hash_region(key)
-
-        data = api_call("GET", "get", {"key":key})
-        # To use nodes.
-        # data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
-
-
-        # This part, where requesting data from memcache, is exactly same as above. Becaause I don't have any good 
-        # ideas to put them into a function. 
-
-        # If the backend misses, look up the database. If the backend hits, decrypt the image and store it
-        if data.status_code == 400:
-            print("\t Backend doesn't hold this value, try search in DB..")
-            data = sql_connection.search_key(key)
-            if len(data) == 0:
-                print("\t DB doesn't hold this value. Search end.")
-                flash("No image with this key.")
-            else:
-                filename = data[0][2]
-                upload_time = data[0][3]
-                print("Filename: {} upload_time: {}".format(filename, upload_time))
-
-                aws_controller.download_file(filename)
-
-                # When data is retrieved from DB, add it to memcache.
-                value = image_encoder(filename, 's3')
-                parms = {"key":key, "value":value, "upload_time":upload_time}
-                result = api_call("POST", "put", parms)
-
-                remove_s3_cache(filename)
-
-                filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
-
-                if result.status_code == 200:
-                    print(" - Frontend: backend stores image into memcache.")
-                else:
-                    print(" - Frontend: memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored locally. ")
-
-        elif data.status_code == 200:
-            data = data.json()
-            value = data["value"]
-            upload_time = data["upload_time"]
-
-            # Add datetime prefix to image cache file.
-            date_prefix = current_datetime()
-            print(" - Frontend.main.search_key v:data_prefix ",date_prefix)
-            filename = "image_local_"+key+"_"+date_prefix+".png"
-
-            # filename = "image_local_"+key+".png"
-
-            write_img_local(filename, value)
-            cache_flag = True
-            print(" - Frontend.main.search_key: v:Filename: {} v:upload_time: {}".format(filename, upload_time))
-
-
+    
     return render_template("search.html", 
                            form = search_form, 
                            tag1_selected=True, 

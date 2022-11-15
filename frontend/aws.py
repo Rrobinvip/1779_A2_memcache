@@ -12,6 +12,8 @@ class AWSController:
     s3_client = None
     bucket = None
 
+    master_instance = None
+
     def __init__(self):
         '''
         instance_active_index: 2 for running, 1 for pending, 0 for stopped. 
@@ -23,6 +25,7 @@ class AWSController:
         self.s3_resource = boto3.resource('s3', region_name='us-east-1')
         self.s3_client = boto3.client('s3', region_name='us-east-1')
         self.bucket = self.s3_resource.Bucket(Config.BUCKET_NAME)
+        self.master_instance = self.ec2_resource.Instance(Config.MASTER_INSTANCE_ID)
 
     def reload_instance_status(self):
         '''
@@ -30,6 +33,7 @@ class AWSController:
         '''
         for i in self.instance_list:
             i.reload()
+        self.master_instance.reload()
 
     def get_instances_status(self):
         '''
@@ -143,8 +147,19 @@ class AWSController:
         
         return result
 
+    def get_master_instance_ip_address(self):
+        self.reload_instance_status()
+        return self.master_instance.public_ip_address
+
     def clear_s3(self):
         # TODO: remove all data inside S3.
+        s3_bucket = self.s3_resource.Bucket('1779-g17-test-1')
+        bucket_versioning = self.s3_resource.BucketVersioning('1779-g17-test-1')
+        if bucket_versioning.status == 'Enabled':
+            s3_bucket.object_versions.delete()
+        else:
+            s3_bucket.objects.all().delete()
+
         return 1
 
     def clear_RDS(self):
