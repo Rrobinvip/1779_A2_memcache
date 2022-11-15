@@ -11,7 +11,7 @@ aws_controller = AWSController()
 
 @app.before_first_request
 def run_when_start():
-    task = threading.Thread(target = cloud_watch())
+    task = threading.Thread(target = cloud_watch)
     task.start()
 
 def cloud_watch():
@@ -34,4 +34,3 @@ def initialize():
         "status":200
     })
     return response
-
