@@ -13,16 +13,14 @@ cloud_watch = CloudWatch()
 @app.before_first_request
 def run_when_start():
     print('-----------Start-----------------------')
-    task = threading.Thread(target = cloud_watch)
+    task = threading.Thread(target = cloud_watch_thread)
     task.start()
 
-def cloud_watch():
+def cloud_watch_thread():
     print("-----------Function Called----------------")
     while True:
         instances = aws_controller.activate_instances()
-        for instance in instances:
-            print(instance)
-            result = cloud_watch.get_miss_rate()
+        result = cloud_watch.get_miss_rate(instances)
         time.sleep(60)
 
 
