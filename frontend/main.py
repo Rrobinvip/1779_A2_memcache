@@ -135,12 +135,14 @@ def upload_picture():
         # Test locally with above, with nodes with below.
         if instance_index_to_assign_key_value != -1:
             print(" - Frontend.main.upload : index of instance to upload at {} in {}, partition {}".format(instance_index_to_assign_key_value, running_instance, partition))
-            connection_test_result = api_call_ipv4(running_instance[instance_index_to_assign_key_value], "GET", "test")
-            if connection_test_result == 200:
-                print(" - Frontend.main.upload_picture : connection to desire instance at {} success, start to upload picture.".format(running_instance[instance_index_to_assign_key_value]))
-                result = api_call_ipv4(running_instance[instance_index_to_assign_key_value], "POST", "put", parms)
+
+            running_instance_ips = list(running_instance.values())
+            connection_test_result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "GET", "test")
+            if connection_test_result.status_code == 200:
+                print(" - Frontend.main.upload_picture : connection to desire instance at {} success, start to upload picture.".format(running_instance_ips[instance_index_to_assign_key_value]))
+                result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "POST", "put", parms)
             else:
-                print(" - Frontend.main.upload_picture : Cannot establish connection to {}, abort.".format(running_instance[instance_index_to_assign_key_value]))
+                print(" - Frontend.main.upload_picture : Cannot establish connection to {}, abort.".format(running_instance_ips[instance_index_to_assign_key_value]))
         else:
             print(" - Frontend.main.upload_picture : No running instances. Image will go to S3. # running instance: {}".format(len(running_instance)))
 
@@ -203,13 +205,14 @@ def search_key():
 
         # data = api_call("GET", "get", {"key":key})
         if instance_index_to_search != -1:
+            running_instance_ips = list(running_instance.values())
             print(" - Frontend.main.search : index of instance to search at {} in {}, partition {}".format(instance_index_to_search, running_instance, partition))
-            connection_test_result = api_call_ipv4(running_instance[instance_index_to_search], "GET", "test")
-            if connection_test_result == 200:
-                print(" - Frontend.main.search : connection to desire instance at {} success, start to search picture.".format(running_instance[instance_index_to_search]))
-                data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
+            connection_test_result = api_call_ipv4(running_instance_ips[instance_index_to_search]+":5000", "GET", "test")
+            if connection_test_result.status_code == 200:
+                print(" - Frontend.main.search : connection to desire instance at {} success, start to search picture.".format(running_instance_ips[instance_index_to_search]))
+                data = api_call_ipv4(running_instance_ips[instance_index_to_search]+":5000", "GET", "get", {"key":key})
             else:
-                print(" - Frontend.main.search : Cannot establish connection to {}, abort.".format(running_instance[instance_index_to_search]))
+                print(" - Frontend.main.search : Cannot establish connection to {}, abort.".format(running_instance_ips[instance_index_to_search]))
         else:
             print(" - Frontend.main.search: No running instances, search in DB only.")
         # To use nodes.
