@@ -14,9 +14,21 @@ from manager_app.helper import api_call
 from manager_app.aws import AWSController
 aws_controller = AWSController()
 
+# Import SQL
+from manager_app.data import Data
+sql_connection = Data()
+
 @app.route("/")
 def manager_main():
     return redirect(url_for("status"))
+
+@app.route('/go_upload')
+def go_upload():
+    ip = aws_controller.get_master_instance_ip_address()
+    if ip == None:
+        ip = 'localhost'
+    url = ip+"/"
+    return redirect(url)
 
 @app.route("/status")
 def status():
@@ -128,6 +140,7 @@ def automatic_resizing():
 @app.route("/delete", methods=["GET", "POST"])
 def delete_data():
     delete_form = DeleteForm()
+    print("DELETE all data")
 
     if request.method == "POST" and delete_form.validate_on_submit():
         ip_address = aws_controller.get_ip_address()
@@ -138,7 +151,7 @@ def delete_data():
             print(e)
     
     aws_controller.clear_s3()
-    aws_controller.clear_RDS()
+    sql_connection.delete_all_entries()
 
     return render_template("delete.html", form2=delete_form, tag3_selected=True)
 

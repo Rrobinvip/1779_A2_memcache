@@ -112,19 +112,7 @@ class Data:
         data = self.cursor.fetchall()
         # print("Statistics data at backend: ", data)
         return data
-
-    def full_reset(self):
-        '''
-        Remove everything from memcache and DB. It's a complete reset. 
-        '''
-        query = """
-                DELETE FROM `configuration`;
-                DELETE FROM `pairs`;
-                DELETE FROM `statistics`;
-                """
-        self.cursor.execute(query, multi=True)
-        self.cnx.commit()
-    
+        
     def get_keys(self):
         '''
         This function will returen all keys in pair table
@@ -139,8 +127,13 @@ class Data:
 
     def delete_all_entries(self):
         query = '''
-                DELETE from pairs;
-                DELETE from statistics;
+                delete from pairs;
                 '''
-        self.cursor.execute(query, multi=True)
+        self.cursor.execute(query)
+        self.cnx.commit()
+
+        query = '''
+                delete from statistics;
+                '''
+        self.cursor.execute(query)
         self.cnx.commit()
