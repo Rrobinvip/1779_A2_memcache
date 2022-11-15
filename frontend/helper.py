@@ -13,9 +13,15 @@ def api_call_ipv4(ipv4, type, commend, params=None):
     url = request_url+'/'+commend
     print(" - frontend.helper.api_call: ", url)
     if type == "GET":
-        return requests.get(url, params, timeout=0.5)
+        try:
+            return requests.get(url, params, timeout=0.5)
+        except ConnectionError as ce:
+            return None
     elif type == "POST":
-        return requests.post(url, params, timeout=0.5)
+        try:
+            return requests.post(url, params, timeout=0.5)
+        except ConnectionError as ce:
+            return None
 
 def api_call(type, commend, params=None):
     '''
