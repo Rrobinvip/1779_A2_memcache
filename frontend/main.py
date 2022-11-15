@@ -63,7 +63,7 @@ def start():
     if r.status_code == 200:
         print(" * Frontend and backend connection success.")
     #initialize the cloud wathc
-    request = requests.get("http://127.0.0.1:5000/auto_scaler/initialize", timeout=0.5)
+    request = requests.get("http://127.0.0.1:5000//scaler/initialize", timeout=5)
     pass
 
 @app.route('/')

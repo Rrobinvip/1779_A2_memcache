@@ -22,10 +22,11 @@ def cloud_watch():
 
 
 
-@app.route("/auto_scaler/initialize")
+@app.route("/initialize")
 def initialize():
     '''
     This function is intend to call when start to initialize cloudwatch
     '''
+    print("-----------------------------------Called-------------------------------------------")
     pass
 
