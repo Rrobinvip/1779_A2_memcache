@@ -24,11 +24,7 @@ def manager_main():
 
 @app.route('/go_upload')
 def go_upload():
-    ip = aws_controller.get_master_instance_ip_address()
-    if ip == None:
-        ip = 'localhost'
-    url = ip+"/"
-    return redirect(url)
+    return redirect('/')
 
 @app.route("/status")
 def status():
@@ -175,10 +171,11 @@ def clear_memcache():
 @app.route("/api/get_config", methods=["GET"])
 def api_get_config():
     if request.method == "GET":
+        print(" - Manager.main.api_get_config : received config get request. If this message pops, means the node is functioning. ")
         # TODO: manager should ask RDS for leatest config. Now just mock it up. 
         size = 100  # From RDS
         choice = 1  # From RDS
 
         # config [0][1] for size, [0][2] policy. From database.
-        config = api_call("localhost:5000/backend/", "GET", "get_config").json()
-        return jsonify({'size':config[0][1], 'replace_policy':config[0][2]}), 200
+
+        return jsonify({'size':size, 'replace_policy':choice}), 200

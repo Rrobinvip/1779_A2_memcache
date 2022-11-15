@@ -70,11 +70,7 @@ def main():
 
 @app.route('/go_manager')
 def go_manager():
-    ip = aws_controller.get_master_instance_ip_address()
-    if ip == None:
-        ip = 'localhost'
-    url = ip+"/manager"
-    return redirect(url)
+    return redirect('/manager')
 
 #This function is front back call example
 @app.route('/test')
@@ -139,6 +135,7 @@ def upload_picture():
         # Test locally with above, with nodes with below.
         if instance_index_to_assign_key_value != -1:
             print(" - Frontend.main.upload : index of instance to upload at {} in {}, partition {}".format(instance_index_to_assign_key_value, running_instance, partition))
+
             running_instance_ips = list(running_instance.values())
             connection_test_result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "GET", "test")
             if connection_test_result.status_code == 200:
