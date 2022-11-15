@@ -3,6 +3,7 @@ import threading
 import time
 from auto_scaler.aws import AWSController
 from ec2_metadata import ec2_metadata
+from flask import jsonify
 
 aws_controller = AWSController()
 
@@ -28,5 +29,9 @@ def initialize():
     This function is intend to call when start to initialize cloudwatch
     '''
     print("-----------------------------------Called-------------------------------------------")
-    pass
+    response = jsonify({
+        "success":"true",
+        "status":200
+    })
+    return response
 
