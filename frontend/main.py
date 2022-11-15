@@ -138,7 +138,7 @@ def upload_picture():
 
             running_instance_ips = list(running_instance.values())
             connection_test_result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "GET", "test")
-            if connection_test_result.status_code == 200:
+            if connection_test_result != None and connection_test_result.status_code == 200:
                 print(" - Frontend.main.upload_picture : connection to desire instance at {} success, start to upload picture.".format(running_instance_ips[instance_index_to_assign_key_value]))
                 result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "POST", "put", parms)
             else:
@@ -219,7 +219,7 @@ def search_key():
         # data = api_call_ipv4(running_instance[instance_index_to_search], "GET", "get", {"key":key})
 
         # If the backend misses, look up the database. If the backend hits, decrypt the image and store it
-        if (data != None and data.status_code == 400) or data == None:
+        if data != None and data.status_code == 400:
             print("\t Backend doesn't hold this value, try search in DB..")
             data = sql_connection.search_key(key)
             if len(data) == 0:
@@ -235,16 +235,30 @@ def search_key():
                 # When data is retrieved from DB, add it to memcache.
                 value = image_encoder(filename, 's3')
                 parms = {"key":key, "value":value, "upload_time":upload_time}
-                result = api_call("POST", "put", parms)
+                result = api_call_ipv4(running_instance_ips[instance_index_to_search]+":5000", "POST", "put", parms)
 
                 remove_s3_cache(filename)
                 
                 filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
 
-                if result.status_code == 200:
+                if result != None and result.status_code == 200:
                     print(" - Frontend: backend stores image into memcache.")
                 else:
                     print(" - Frontend: memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored locally. ")
+
+        # In case of no running instance, directly search in DB. 
+        elif data == None:
+            print("\t No instance running, try search in DB..")
+            data = sql_connection.search_key(key)
+
+            if len(data) == 0:
+                print("\t DB doesn't hold this value. Search end.")
+                flash("No image with this key.")
+            else:
+                filename = data[0][2]
+                upload_time = data[0][3]
+                print("Filename: {} upload_time: {}".format(filename, upload_time))
+                filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
 
         elif data != None and data.status_code == 200:
             data = data.json()

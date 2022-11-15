@@ -37,6 +37,6 @@ class PoolHashingAllocator():
         region_index = self.region_starting_point.index(hash_result[0])
 
         if self.current_number_nodes == 0:
-            return -1
+            return -1, -1
 
         return region_index%self.current_number_nodes, region_index
