@@ -492,68 +492,25 @@ def api_upload():
                 }
         })
 
-@app.route("/api/nocache/upload", methods=['POST'])
-def api_nocache_upload():
-    key = request.form.get('key')
-    file = request.files['file']
-    filename = file.filename
-    
-    if filename == '':
-        return jsonify({
-            "success":"false",
-            "error":{
-                "code":400,
-                "message":"No file given"
-            }
-        })
-    if file and allowed_file(filename):
-        api_image_store(file,filename)
-        sql_connection.add_entry(key,filename)
-        return jsonify({
-            "success":"true"
-        })
+@app.route("/handshake", methods = ["GET"])
+def handshake():
+    response = jsonify({
+        "success":"false",
+        "error":{
+            "code":400,
+            "message":"Error in handshake"
+        }
+    })
+    if "instanceID" in request.args:
+        instanceID = request.args.get("instanceID")
+        ipAddress = aws_controller.get_ip_address()
+        if instanceID in ipAddress:
+            handshake_address = ipAddress.get("instanceID")
+            url = handshake_address+":5000/"
+            response = api_call(url, "GET", "handshake")
+            return response
+        else:
+            return response
     else:
-        if not file:
-            return jsonify({
-                "success":"false",
-                "error":{
-                    "code":400,
-                    "message":"No file given"
-                }
-            })
-        if not allowed_file(filename):
-            return jsonify({
-                "success":"false",
-                "error":{
-                    "code":400,
-                    "message":"File type not allowed"
-                }
-            })
-        return jsonify({
-            "success":"false",
-            "error":{
-                "code":400,
-                "message":"Unknow error"
-            }
-        })
-
-@app.route("/api/nocache/key/<key_value>", methods = ['POST'])
-def api_nocache_key_search(key_value):
-    result = sql_connection.search_key(key_value)
-    if len(result) == 0:
-        return jsonify({
-            "success":"false",
-            "error":{
-                "code":400,
-                "message":"Unknown Key Value"
-            }
-        })
-    else:
-        filename = result[0][2]
-
-        aws_controller.download_file(filename)
-        content = image_encoder(filename, 's3').decode()
-        return jsonify({
-            "success":"true",
-            "content":content
-        })
+        return response
+            
