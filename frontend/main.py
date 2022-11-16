@@ -505,9 +505,12 @@ def handshake():
         instanceID = request.args.get("instanceID")
         ipAddress = aws_controller.get_ip_address()
         if instanceID in ipAddress:
-            handshake_address = ipAddress.get("instanceID")
-            url = handshake_address+":5000/"
-            response = api_call(url, "GET", "handshake")
+            print(ipAddress)
+            print(instanceID)
+            handshake_address = ipAddress.get(instanceID)
+            print(handshake_address)
+            url = handshake_address+":5000"
+            response = requests.get("http://"+url+"/handshake", timeout = 1)
             return response
         else:
             return response
