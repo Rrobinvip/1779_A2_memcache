@@ -41,7 +41,7 @@
 
             <form method="POST" enctype="multipart/form-data">
                 {{ form1.hidden_tag() }}
-                <div class="row justify-content-center">
+                <div class="row justify-content-center mt-2">
                     <div class="col-auto">
                         {{ form1.max_threshold(class="form-control")}}
                     </div>
@@ -49,7 +49,7 @@
                         {{ form1.min_threshold(class="form-control")}}
                     </div>
                 </div>
-                <div class="row justify-content-center">
+                <div class="row justify-content-center mt-2">
                     <div class="col-auto">
                         {{ form1.expand_ratio(class="form-control")}}
                     </div>
@@ -57,10 +57,11 @@
                         {{ form1.shrink_ratio(class="form-control")}}
                     </div>
                 </div>
-                <div class="row justify-content-center">
+                <div class="row justify-content-center mt-2">
                     <div class="col-auto">
                         {{ form1.submit(class="btn btn-success")}}
                     </div>
+
                 </div>
             </form>
         </div>

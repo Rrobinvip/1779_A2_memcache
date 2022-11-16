@@ -116,9 +116,9 @@ def manual_resizing():
             flash("Operation success")
             api_call("127.0.0.1:5000/", "GET", "api/pool_size_notify", {"size":len(aws_controller.get_ip_address())})
             # Call scaler to exit auto mode.
-            api_call("127.0.0.1:5000/scaler/", "GET", "manual_mode")
+            api_call("127.0.0.1:5000/scaler/", "GET", "manual_mode", timeout=2)
         else:
-            flash("Operation failed.\nReasons can be either: No more intsances to stop/All instances are already running/Some pending instances.")
+            flash("Operation failed.\nReasons can be either: No more intsances to stop/All instances are already running/Some pending instances. At least one running instance")
         
 
         return redirect(url_for("manual_resizing"))
@@ -136,6 +136,8 @@ def automatic_resizing():
         min_tr = Decimal(auto_policy_form.min_threshold.data)
         expand_ratio = Decimal(auto_policy_form.expand_ratio.data)
         shrink_ratio = Decimal(auto_policy_form.shrink_ratio.data)
+        
+        print(" - Manager.automatic :{}, {}, {}, {}".format(max_tr, min_tr, expand_ratio, shrink_ratio))
 
         if max_tr < min_tr:
             flash("Operation failed, max threshold max greater then min threshold")

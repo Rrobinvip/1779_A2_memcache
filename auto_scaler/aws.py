@@ -48,7 +48,7 @@ class AWSController:
 
         return result
 
-    def instance_operation(self, commend, flag):
+    def instance_operation(self, commend, flag, ratio=None):
         '''
         commend: growing or shrinking.
         flag: 1 for grow/shrink 1 instance at a time. 0 for grow/shrink based on ratio 2/0.5.
@@ -60,8 +60,8 @@ class AWSController:
         When `flag == 1`, `commend == 'growing', method will go through all instances, find one stopped instance and start it. If there has no 
         stopped instance, method will retun operation fail.
 
-       When `flag == 0`, `commend == 'growing', method will check if there has enough space to grow. Operation fail will be returned if no enough instances satisfy 
-       the growing ratie. Also when 'shrinking', method will make sure there has at least one instance running. 
+        When `flag == 0`, `commend == 'growing', method will check if there has enough space to grow. If no enough space to grow, it will grow to max node (8 in this case.).
+        Also when 'shrinking', method will make sure there has at least one instance running. 
         '''
         # Update instances status.
         self.reload_instance_status()
@@ -98,19 +98,27 @@ class AWSController:
 
             if commend == 'growing':
                 # conditional statement make sure there are enough space.
-                if 2*number_of_running_instances <= len(self.instance_list):
-                    for c in range(number_of_running_instances):
-                        for i in self.instance_list:
-                            if i.state['Name'] == 'stopped':
-                                i.start()
+                executing_time = int(ratio*number_of_running_instances)
+                if executing_time > len(self.instance_list):
+                    executing_time = 8
+
+                for c in range(executing_time-1):
+                    for i in self.instance_list:
+                        if i.state['Name'] == 'stopped':
+                            i.start()
+                            break
                     operation_success = True
             else:
-                if number_of_running_instances//2 >= 0:
-                    for c in range(number_of_running_instances-(number_of_running_instances-len(self.instance_list))):
-                        for i in self.instance_list:
-                            if i.state['Name'] == 'running':
-                                i.stop()
-                    operation_success = True
+                executing_time = int(number_of_running_instances*ratio)
+                if executing_time == 0:
+                    return {"status_code":400, "operation_type":"ratio shrink", "message":"operation failed"}
+                print(" - scaler.aws v:range :{}".format(number_of_running_instances-executing_time))
+                for c in range(number_of_running_instances-executing_time):
+                    for i in self.instance_list:
+                        if i.state['Name'] == 'running':
+                            i.stop()
+                            break
+                operation_success = True
             
             if operation_success:
                 return {"status_code":200, "operation_type":"ratio growing/shrinking", "message":"operation success"}
