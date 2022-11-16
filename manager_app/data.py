@@ -147,7 +147,6 @@ class Data:
                     SELECT MAX(id) From configuration
                 )
                 """
-        self.cnx.commit()
         self.cursor.execute(query)
         print(" - Backend.data.get_config_data: Config Query Executed.")
         data = self.cursor.fetchall()

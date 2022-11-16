@@ -62,11 +62,6 @@ class AutoForm(FlaskForm):
         ],
         render_kw={"placeholder": "Shrink ratio, max 0.99 and min 0.01 (Cannot be 1 and 0)"}
     )
-    auto_resizing_policy = SelectField(
-        "auto_resizing_policy",
-        choices=[(1, "Max Miss Rate threshold"), 
-                 (2, "Min Miss Rate threshold")]
-    )
     submit = SubmitField("Apply")
 
 class ManualForm(FlaskForm):

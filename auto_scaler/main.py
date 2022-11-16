@@ -13,15 +13,23 @@ scaler = Scaler()
 
 MIN_INSTANCE_LIMIT = 1
 MAX_INSTANCE_LIMIT = 8
-TIME_INTERVAL = 60
+TIME_INTERVAL = 1
 
+stop_event = threading.Event()
 
 def cloud_watch_thread():
+    iteration = 60
     while True:
+        if iteration == 60:
         #Do the auto scaling every 1 min
-        instances = aws_controller.activate_instances()
-        result = cloud_watch.get_miss_rate(instances)
-        auto_scaler_checker(result)
+            instances = aws_controller.activate_instances()
+            result = cloud_watch.get_miss_rate(instances)
+            auto_scaler_checker(result)
+            iteration = 0
+        iteration += 1
+        if stop_event.is_set():
+            print(" - scaler.main.thread : I think I should stop.")
+            break
         time.sleep(TIME_INTERVAL)
 
 def auto_scaler_checker(result):
@@ -33,9 +41,11 @@ def auto_scaler_checker(result):
     print("Max Miss Rate: {}".format(maxMissRateThreshold))
     print("Min Miss Rate: {}".format(minMissRateThreshold))
     if result <= minMissRateThreshold:
-        expand(expandRatio)
-    elif result >= maxMissRateThreshold:
+        print(" scaler.main : shrinking")
         shrink(shrinkRatio)
+    elif result >= maxMissRateThreshold:
+        print(" scaler.main : expanding")
+        expand(expandRatio)
 
 def expand(expandRatio):
     #calculate the number to expand
@@ -46,18 +56,18 @@ def expand(expandRatio):
         targetActiveNumber = MAX_INSTANCE_LIMIT
     if targetActiveNumber < MIN_INSTANCE_LIMIT:
         targetActiveNumber = MIN_INSTANCE_LIMIT
-    print("Before Expanding the number of nodes: ")
-    print("Current active nodes {}".format(currentActiveNumber))
-    print("Target active nodes {}".format(targetActiveNumber))
+    print(" - scaler.mian.expend: expanding..")
+    print("\tBefore Expanding the number of nodes: ")
+    print("\tCurrent active nodes {}".format(currentActiveNumber))
+    print("\tTarget active nodes {}".format(targetActiveNumber))
 
-    for n in range(targetActiveNumber - currentActiveNumber):
-        result = aws_controller.instance_operation("growing",1)
-    
+    result = aws_controller.instance_operation("growing", 0, ratio=expandRatio)
+
     currentActiveInstances = aws_controller.activate_instances()
     currentActiveNumber = len(currentActiveInstances)
-    print("After Expanding the number of nodes: ")
-    print("Current active nodes {}".format(currentActiveNumber))
-    print("Target active nodes {}".format(targetActiveNumber))
+    print("\tAfter Expanding the number of nodes: ")
+    print("\tCurrent active nodes {}".format(currentActiveNumber))
+    print("\tTarget active nodes {}".format(targetActiveNumber))
 
 def shrink(shrinkRatio):
     currentActiveInstances = aws_controller.activate_instances()
@@ -68,18 +78,18 @@ def shrink(shrinkRatio):
     if targetActiveNumber < MIN_INSTANCE_LIMIT:
         targetActiveNumber = MIN_INSTANCE_LIMIT
     
-    print("Before Expanding the number of nodes: ")
-    print("Current active nodes {}".format(currentActiveNumber))
-    print("Target active nodes {}".format(targetActiveNumber))
+    print(" - scaler.mian.expend: shrinking..")
+    print("\tBefore shrinking the number of nodes: ")
+    print("\tCurrent active nodes {}".format(currentActiveNumber))
+    print("\tTarget active nodes {}".format(targetActiveNumber))
 
-    for n in range(targetActiveNumber - currentActiveNumber):
-        result = aws_controller.instance_operation("shrink",1)
+    result = aws_controller.instance_operation("shrinking", 0, ratio=shrinkRatio)
     
     currentActiveInstances = aws_controller.activate_instances()
     currentActiveNumber = len(currentActiveInstances)
-    print("After Expanding the number of nodes: ")
-    print("Current active nodes {}".format(currentActiveNumber))
-    print("Target active nodes {}".format(targetActiveNumber))
+    print("\tAfter shrinking the number of nodes: ")
+    print("\tCurrent active nodes {}".format(currentActiveNumber))
+    print("\tTarget active nodes {}".format(targetActiveNumber))
     
 
         
@@ -87,14 +97,15 @@ def shrink(shrinkRatio):
 cloud_watch_task = threading.Thread(target = cloud_watch_thread)
 
 
-@app.route("/manual_mode")
+@app.route("/manual_mode", methods=['GET'])
 def switch_manual_mode():
     '''
     This function switch auto scaler to manual mode
     '''
     if cloud_watch_task.is_alive():
         try:
-            cloud_watch_task.join()
+            # cloud_watch_task.join()
+            stop_event.set()
             response = jsonify({
                 "success":"true",
                 "status":200
