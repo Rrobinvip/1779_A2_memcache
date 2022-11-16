@@ -183,7 +183,7 @@ def api_get_config():
         try:
             size = config[0][1]
             choice = config[0][2]
-        except IndexError and TypeError as e:
+        except IndexError or TypeError as e:
             size = 100  # From RDS
             choice = 1  # From RDS
         # config [0][1] for size, [0][2] policy. From database.
