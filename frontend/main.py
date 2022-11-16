@@ -13,6 +13,7 @@ import requests
 import logging
 from datetime import datetime
 import time
+import threading
 
 # Picture upload form
 from frontend.form import UploadForm, pictures
@@ -52,6 +53,25 @@ sql_connection = Data()
 
 running_instance = aws_controller.get_ip_address()
 hash_mapper = PoolHashingAllocator(len(running_instance))
+
+handshakeIndicator = False
+
+def handshake():
+    while True:
+        if not handshakeIndicator:
+            continue
+        else:
+            time.sleep(0.5)
+            activeIPAddress = aws_controller.get_ip_address().values()
+            for address in activeIPAddress:
+                url = "http://"+address+":5000/handshake"
+                response = requests.get(url, timeout=0.5)
+            handshakeIndicator = False
+
+handshakeThread = threading.Thread(target = handshake)
+handshakeThread.start()
+            
+
 
 @app.route('/')
 def main():
@@ -495,30 +515,10 @@ def api_upload():
 
 @app.route("/handshake", methods = ["GET"])
 def handshake():
-    response = jsonify({
-        "success":"false",
-        "error":{
-            "code":400,
-            "message":"Error in handshake"
-        }
+    handshakeIndicator = True
+    return jsonify({
+        "success":"true",
+        "status":200
     })
-    if "instanceID" in request.args:
-        instanceID = request.args.get("instanceID")
-        ipAddress = aws_controller.get_ip_address()
-        if instanceID in ipAddress:
-            print(ipAddress)
-            print(instanceID)
-            handshake_address = ipAddress.get(instanceID)
-            print(handshake_address)
-            url = "http://"+handshake_address+":5000/handshake"
-            hand_shake_action(url)
-            return response
-        else:
-            return response
-    else:
-        return response
 
-def hand_shake_action(url):
-    time.sleep(0.5)
-    response = 
             
