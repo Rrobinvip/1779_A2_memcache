@@ -105,7 +105,7 @@ class AWSController:
                                 i.start()
                     operation_success = True
             else:
-                if number_of_running_instances//2 != 0:
+                if number_of_running_instances//2 >= 0:
                     for c in range(number_of_running_instances-(number_of_running_instances-len(self.instance_list))):
                         for i in self.instance_list:
                             if i.state['Name'] == 'running':

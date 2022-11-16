@@ -52,19 +52,19 @@ sql_connection = Data()
 running_instance = aws_controller.get_ip_address()
 hash_mapper = PoolHashingAllocator(len(running_instance))
 
-@app.before_first_request
-def start():
-    '''
-    This function calls the backend statistics before the first request. 
-    And it will also detect if frontend and backend is working properly. 
-    '''
-    r = api_call("GET", "statistics")
-    print("Response: ", r)
-    if r.status_code == 200:
-        print(" * Frontend and backend connection success.")
-    #initialize the cloud wathc
-    request = requests.get("http://127.0.0.1:5000/scaler/initialize", timeout=5)
-    pass
+# @app.before_first_request
+# def start():
+#     '''
+#     This function calls the backend statistics before the first request. 
+#     And it will also detect if frontend and backend is working properly. 
+#     '''
+#     r = api_call("GET", "statistics")
+#     print("Response: ", r)
+#     if r.status_code == 200:
+#         print(" * Frontend and backend connection success.")
+#     #initialize the cloud wathc
+#     request = requests.get("http://127.0.0.1:5000/scaler/initialize", timeout=5)
+#     pass
 
 @app.route('/')
 def main():
@@ -369,7 +369,7 @@ def pool_size_update():
     This method allows frontend to be notified when pool size changed. 
     '''
     print(" - Frontend.main : pools_size_update called.")
-    print(" - Frontend.main : pool_size_update, current running ips:{}".format(aws_controller.get_ip_address()))
+    # print(" - Frontend.main : pool_size_update, current running ips:{}".format(aws_controller.get_ip_address()))
 
     if request.method == 'GET' and 'size' in request.args:
         size = int(request.args.get('size'))
