@@ -3,36 +3,217 @@ import threading
 import time
 from auto_scaler.aws import AWSController
 from auto_scaler.cloudwatch import CloudWatch
+from auto_scaler.scaler import Scaler
 from ec2_metadata import ec2_metadata
-from flask import jsonify
+from flask import jsonify, request
 
 aws_controller = AWSController()
 cloud_watch = CloudWatch()
+scaler = Scaler()
 
+MIN_INSTANCE_LIMIT = 1
+MAX_INSTANCE_LIMIT = 8
+TIME_INTERVAL = 60
 
-@app.before_first_request
-def run_when_start():
-    print('-----------Start-----------------------')
-    task = threading.Thread(target = cloud_watch_thread)
-    task.start()
 
 def cloud_watch_thread():
-    print("-----------Function Called----------------")
     while True:
+        #Do the auto scaling every 1 min
         instances = aws_controller.activate_instances()
         result = cloud_watch.get_miss_rate(instances)
-        time.sleep(60)
+        auto_scaler_checker(result)
+        time.sleep(TIME_INTERVAL)
+
+def auto_scaler_checker(result):
+    maxMissRateThreshold = scaler.get_max_miss_rate_threshold()
+    minMissRateThreshold = scaler.get_min_miss_rate_threshold()
+    expandRatio = scaler.get_expand_ratio()
+    shrinkRatio = scaler.get_shrink_ratio()
+    print("Current Miss Rate {}".format(result))
+    print("Max Miss Rate: {}".format(maxMissRateThreshold))
+    print("Min Miss Rate: {}".format(minMissRateThreshold))
+    if result <= minMissRateThreshold:
+        expand(expandRatio)
+    elif result >= maxMissRateThreshold:
+        shrink(shrinkRatio)
+
+def expand(expandRatio):
+    #calculate the number to expand
+    currentActiveInstances = aws_controller.activate_instances()
+    currentActiveNumber = len(currentActiveInstances)
+    targetActiveNumber =  round(currentActiveNumber*expandRatio)
+    if targetActiveNumber > MAX_INSTANCE_LIMIT:
+        targetActiveNumber = MAX_INSTANCE_LIMIT
+    if targetActiveNumber < MIN_INSTANCE_LIMIT:
+        targetActiveNumber = MIN_INSTANCE_LIMIT
+    print("Before Expanding the number of nodes: ")
+    print("Current active nodes {}".format(currentActiveNumber))
+    print("Target active nodes {}".format(targetActiveNumber))
+
+    for n in range(targetActiveNumber - currentActiveNumber):
+        result = aws_controller.instance_operation("growing",1)
+    
+    currentActiveInstances = aws_controller.activate_instances()
+    currentActiveNumber = len(currentActiveInstances)
+    print("After Expanding the number of nodes: ")
+    print("Current active nodes {}".format(currentActiveNumber))
+    print("Target active nodes {}".format(targetActiveNumber))
+
+def shrink(shrinkRatio):
+    currentActiveInstances = aws_controller.activate_instances()
+    currentActiveNumber = len(currentActiveInstances)
+    targetActiveNumber = round(currentActiveNumber * shrinkRatio)
+    if targetActiveNumber > MAX_INSTANCE_LIMIT:
+        targetActiveNumber = MAX_INSTANCE_LIMIT
+    if targetActiveNumber < MIN_INSTANCE_LIMIT:
+        targetActiveNumber = MIN_INSTANCE_LIMIT
+    
+    print("Before Expanding the number of nodes: ")
+    print("Current active nodes {}".format(currentActiveNumber))
+    print("Target active nodes {}".format(targetActiveNumber))
+
+    for n in range(targetActiveNumber - currentActiveNumber):
+        result = aws_controller.instance_operation("shrink",1)
+    
+    currentActiveInstances = aws_controller.activate_instances()
+    currentActiveNumber = len(currentActiveInstances)
+    print("After Expanding the number of nodes: ")
+    print("Current active nodes {}".format(currentActiveNumber))
+    print("Target active nodes {}".format(targetActiveNumber))
+    
+
+        
+
+cloud_watch_task = threading.Thread(target = cloud_watch_thread)
 
 
-
-@app.route("/initialize")
-def initialize():
+@app.route("/manual_mode")
+def switch_manual_mode():
     '''
-    This function is intend to call when start to initialize cloudwatch
+    This function switch auto scaler to manual mode
     '''
-    print("------------called-----------------")
-    response = jsonify({
-        "success":"true",
-        "status":200
-    })
+    if cloud_watch_task.is_alive():
+        try:
+            cloud_watch_task.join()
+            response = jsonify({
+                "success":"true",
+                "status":200
+            })
+        except:
+            print("Can not terminate thread")
+            response = jsonify({
+                "success": "false",
+                "error":{
+                    "code":400,
+                    "message":"Can not terminate thread"
+                }
+            })
+    else:
+        response = jsonify({
+            "success":"true",
+            "status":200
+        })
+    return response
+    
+
+@app.rout("/config", methods = ['GET'])
+def auto_scaler_config():
+    '''
+    This function switch auto scaler to auto mode and update config
+    '''
+    maxMissRateThreshold = None
+    minMissRateThreshold = None
+    expandRatio = None
+    shrinkRatio = None
+    if 'maxMissRateThreshold' in request.args and \
+        'minMissRateThreshold' in request.args and \
+        'expandRatio' in request.args and \
+        'shrinkRatio' in request.args :
+        maxMissRateThreshold = float(request.args.get('maxMissRateThreshold'))
+        minMissRateThreshold = float(request.args.get('minMissRateThreshold'))
+        expandRatio = float(request.args.get('expandRatio'))
+        shrinkRatio = float(request.args.get('shrinkRatio'))
+    if maxMissRateThreshold is not None and \
+        minMissRateThreshold is not None and \
+        expandRatio is not None and \
+        shrinkRatio is not None:
+        scaler.set_max_miss_rate_threshold(maxMissRateThreshold)
+        scaler.set_min_miss_rate_threshold(minMissRateThreshold)
+        scaler.set_expand_ratio(expandRatio)
+        scaler.set_shrink_ratio(shrinkRatio)
+        #start the cloud watch
+        if not cloud_watch_task.is_alive():
+            try:
+                cloud_watch_task.start()
+                response = jsonify({
+                    "success":"true",
+                    "status":200
+                })
+            except:
+                print("Error when start thread")
+                response = jsonify({
+                    "success":"false",
+                    "error":{
+                        "code":400,
+                        "message":"Can not start thread"
+                    }
+                })
+        else:
+            try:
+                cloud_watch_task.join()
+                cloud_watch_task.start()
+                response = jsonify({
+                    "success":"true",
+                    "status":200
+                })
+            except:
+                response = jsonify({
+                   "success":"false",
+                   "error":{
+                    "code":400,
+                    "message":"Thread stop and start error"
+                   } 
+                })
+    else:
+        print("Error Parameter")
+        response = jsonify({
+            "success":"false",
+            "error":{
+                "code":400,
+                "message":"Error parameters"
+            }
+        })
+    return response
+
+
+@app.route("/auto_test", method = "GET")
+def auto_test():
+    maxMissRateThreshold = 0.5
+    minMissRateThreadhold = 0.25
+    expandRatio = 2.0
+    shrinkRatio = 0.5
+    scaler.set_max_miss_rate_threshold(maxMissRateThreshold)
+    scaler.set_min_miss_rate_threshold(minMissRateThreadhold)
+    scaler.set_expand_ratio(expandRatio)
+    scaler.set_shrink_ratio(shrinkRatio)
+    if not cloud_watch_task.is_alive():
+        try:
+            cloud_watch_task.start()
+            response = jsonify({
+                "success":"true",
+                "status" : 200
+            })
+        except:
+            response = jsonify({
+                "success":"false",
+                "error":{
+                    "code":400,
+                    "message":"Can not start thread"
+                }
+            })
+    else:
+        response = jsonify({
+            "success":"true",
+            "status":200
+        })
     return response
