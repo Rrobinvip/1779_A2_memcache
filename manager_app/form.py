@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import DataRequired
 # from wtforms import StringField, SubmitField, FileField
-from wtforms.fields import IntegerField, SelectField, SubmitField
+from wtforms.fields import IntegerField, SelectField, SubmitField, DecimalField
 from wtforms.validators import DataRequired, NumberRange
+from decimal import ROUND_DOWN
 from frontend import app
 
 '''
@@ -25,20 +26,46 @@ class ConfigForm(FlaskForm):
     submit = SubmitField("Apply")
 
 class AutoForm(FlaskForm):
-    threshold = IntegerField(
-        "size",
+    max_threshold = DecimalField(
+        "max_threshold",
+        rounding=ROUND_DOWN,
         validators=[
             DataRequired(),
-            NumberRange(min=1, max=100)
+            NumberRange(min=0, max=1)
         ],
-        render_kw={"placeholder": "Percent (Dont put '%' sign"}
+        render_kw={"placeholder": "Max threshold: put a decimal greater > 0 and < 1"}
+    )
+    min_threshold = DecimalField(
+        "min_threshold",
+        rounding=ROUND_DOWN,
+        validators=[
+            DataRequired(),
+            NumberRange(min=0, max=1)
+        ],
+        render_kw={"placeholder": "Min threshold: put a decimal greater > 0 and < 1"}
+    )
+    expand_ratio = DecimalField(
+        "expend_ratio",
+        rounding=ROUND_DOWN,
+        validators=[
+            DataRequired(),
+            NumberRange(min=1.01, max=8)
+        ],
+        render_kw={"placeholder": "Expend ratio, max 8 and min 1.01 (Cannot be 1)"}
+    )
+    shrink_ratio = DecimalField(
+        "shrink_ratio",
+        rounding=ROUND_DOWN,
+        validators=[
+            DataRequired(),
+            NumberRange(min=0.01, max=0.99)
+        ],
+        render_kw={"placeholder": "Shrink ratio, max 0.99 and min 0.01 (Cannot be 1 and 0)"}
     )
     auto_resizing_policy = SelectField(
         "auto_resizing_policy",
         choices=[(1, "Max Miss Rate threshold"), 
-                 (2, "Min Miss Rate threshold"), 
-                 (3, "Ratio by which to expand the pool"), 
-                 (4, "Ratio by which to shrink the pool")]
+                 (2, "Min Miss Rate threshold")]
     )
     submit = SubmitField("Apply")
 

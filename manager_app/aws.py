@@ -60,8 +60,8 @@ class AWSController:
         When `flag == 1`, `commend == 'growing', method will go through all instances, find one stopped instance and start it. If there has no 
         stopped instance, method will retun operation fail.
 
-       When `flag == 0`, `commend == 'growing', method will check if there has enough space to grow. Operation fail will be returned if no enough instances satisfy 
-       the growing ratie. Also when 'shrinking', method will make sure there has at least one instance running. 
+        When `flag == 0`, `commend == 'growing', method will check if there has enough space to grow. Operation fail will be returned if no enough instances satisfy 
+        the growing ratie. Also when 'shrinking', method will make sure there has at least one instance running. 
         '''
         # Update instances status.
         self.reload_instance_status()
@@ -75,6 +75,9 @@ class AWSController:
                         opertion_success = True
                         break
             else:
+                running_instance = self.get_ip_address()
+                if len(running_instance) == 1:
+                    return {"status_code":400, "operation_type":"single shrinking", "message":"operation failed, must be one running instance."}
                 for i in self.instance_list:
                     if i.state['Name'] == 'running':
                         i.stop()
