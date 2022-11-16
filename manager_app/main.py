@@ -58,6 +58,8 @@ def memcache_config():
             url = e+":5000/"
             result = api_call(url, "GET", "config", parms)
         
+        sql_connection.insert_config_data(size, choice)
+        
         flash("Update success")
 
         return redirect(url_for("memcache_config"))
@@ -73,6 +75,7 @@ def memcache_config():
             url = e+":5000/"
             result = api_call(url, "GET", "config", parms)
         
+        sql_connection.insert_config_data(size, choice)
         flash("Update success")
 
         return redirect(url_for("memcache_config"))
@@ -175,7 +178,14 @@ def api_get_config():
         # TODO: manager should ask RDS for leatest config. Now just mock it up. 
         size = 100  # From RDS
         choice = 1  # From RDS
-
+        
+        config = sql_connection.get_config_data()
+        try:
+            size = config[0][1]
+            choice = config[0][2]
+        except IndexError and TypeError as e:
+            size = 100  # From RDS
+            choice = 1  # From RDS
         # config [0][1] for size, [0][2] policy. From database.
 
         return jsonify({'size':size, 'replace_policy':choice}), 200

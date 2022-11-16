@@ -112,7 +112,7 @@ class Data:
         data = self.cursor.fetchall()
         # print("Statistics data at backend: ", data)
         return data
-        
+
     def get_keys(self):
         '''
         This function will returen all keys in pair table
@@ -135,5 +135,33 @@ class Data:
         query = '''
                 delete from statistics;
                 '''
+        self.cursor.execute(query)
+        self.cnx.commit()
+
+    #get the data from the configuration table
+    #this function will return the latest memcache config
+    def get_config_data(self):
+        #select the latest configuraiton from the database
+        query = """
+                SELECT * FROM configuration WHERE id = (
+                    SELECT MAX(id) From configuration
+                )
+                """
+        self.cnx.commit()
+        self.cursor.execute(query)
+        print(" - Backend.data.get_config_data: Config Query Executed.")
+        data = self.cursor.fetchall()
+        return data
+    
+    #insert into the configuration database
+    #capacity: the capacity of the memcache
+    #policy: 0 for Random Replacement, 1 for Least Recently Used
+    def insert_config_data(self,capacity,policy):
+
+        query = """
+                INSERT INTO `configuration` (`capacity`,`replacePolicy`)
+                VALUES("{}","{}");
+        """.format(capacity,policy)
+
         self.cursor.execute(query)
         self.cnx.commit()
