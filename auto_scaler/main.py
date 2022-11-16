@@ -186,7 +186,7 @@ def auto_scaler_config():
     return response
 
 
-@app.route("/auto_test", methods = "GET")
+@app.route("/auto_test", methods = ["GET"])
 def auto_test():
     maxMissRateThreshold = 0.5
     minMissRateThreadhold = 0.25
