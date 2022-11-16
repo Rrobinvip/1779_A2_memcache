@@ -57,6 +57,7 @@ hash_mapper = PoolHashingAllocator(len(running_instance))
 handshakeIndicator = False
 
 def handshake():
+    global handshakeIndicator
     while True:
         if not handshakeIndicator:
             continue
@@ -515,6 +516,7 @@ def api_upload():
 
 @app.route("/handshake", methods = ["GET"])
 def handshake():
+    global handshakeIndicator
     handshakeIndicator = True
     return jsonify({
         "success":"true",
