@@ -62,8 +62,10 @@ class CloudWatch:
                 Unit = 'Percent'
             )
             results.append(result)
+        print(results)
         for result in results:
             datapoint = result['Datapoints']
+            print("Datapoint: {}".format(datapoint))
             #The datapoints for this instance is 0
             #It either not initialized or has not sent any data yet
             if len(datapoint) == 0:
