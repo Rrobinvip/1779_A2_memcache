@@ -3,6 +3,7 @@ from flask import render_template, url_for, request, redirect
 from flask import flash, jsonify
 import requests
 from glob import escape
+from decimal import Decimal
 
 # Import Forms
 from manager_app.form import ConfigForm, ClearForm, DeleteForm, ManualForm, AutoForm
@@ -94,6 +95,9 @@ def memcache_config():
 
 @app.route("/manual", methods=["GET", "POST"])
 def manual_resizing():
+    '''
+    By manually controlling instances, it will notify auto scaler to stop auto mode. 
+    '''
     manual_form = ManualForm()
 
     status_dic = aws_controller.get_instances_status()
@@ -111,6 +115,8 @@ def manual_resizing():
         if result['status_code'] == 200:
             flash("Operation success")
             api_call("127.0.0.1:5000/", "GET", "api/pool_size_notify", {"size":len(aws_controller.get_ip_address())})
+            # Call scaler to exit auto mode.
+            api_call("127.0.0.1:5000/scaler/", "GET", "manual_mode")
         else:
             flash("Operation failed.\nReasons can be either: No more intsances to stop/All instances are already running/Some pending instances.")
         
@@ -126,11 +132,29 @@ def automatic_resizing():
     status_dic = aws_controller.get_instances_status()
 
     if request.method == "POST" and auto_policy_form.validate_on_submit():
-        choice = auto_policy_form.auto_resizing_policy.data
+        max_tr = Decimal(auto_policy_form.max_threshold.data)
+        min_tr = Decimal(auto_policy_form.min_threshold.data)
+        expand_ratio = Decimal(auto_policy_form.expand_ratio.data)
+        shrink_ratio = Decimal(auto_policy_form.shrink_ratio.data)
 
-        # TODO:
-        # Make api call to scaler to update auto resizing policy
-        flash("Choice is {}".format(choice))
+        if max_tr < min_tr:
+            flash("Operation failed, max threshold max greater then min threshold")
+            return redirect(url_for("automatic_resizing"))
+        
+        parms = {
+            'maxMissRateThreshold':max_tr,
+            'minMissRateThreshold':min_tr,
+            'expandRatio':expand_ratio,
+            'shrinkRatio':shrink_ratio
+        }
+        # Call scaler to enter auto mode. 
+        result = api_call("127.0.0.1:5000/scaler/", "GET", "config", parms)
+        result = result.json()
+
+        if result['success'] == 'true':
+            flash("Operation success, now it's auto mode.")
+        else:
+            flash("Operation failed, it's still manual mode.")
 
         return redirect(url_for("automatic_resizing"))
 
