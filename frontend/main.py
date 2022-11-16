@@ -12,6 +12,7 @@ from frontend import app
 import requests
 import logging
 from datetime import datetime
+import time
 
 # Picture upload form
 from frontend.form import UploadForm, pictures
@@ -509,11 +510,15 @@ def handshake():
             print(instanceID)
             handshake_address = ipAddress.get(instanceID)
             print(handshake_address)
-            url = handshake_address+":5000"
-            response = requests.get("http://"+url+"/handshake", timeout = 1)
+            url = "http://"+handshake_address+":5000/handshake"
+            hand_shake_action(url)
             return response
         else:
             return response
     else:
         return response
+
+def hand_shake_action(url):
+    time.sleep(0.5)
+    response = 
             
