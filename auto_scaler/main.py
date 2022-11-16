@@ -116,7 +116,7 @@ def switch_manual_mode():
     return response
     
 
-@app.rout("/config", methods = ['GET'])
+@app.route("/config", methods = ['GET'])
 def auto_scaler_config():
     '''
     This function switch auto scaler to auto mode and update config
