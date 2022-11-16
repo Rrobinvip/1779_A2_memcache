@@ -46,7 +46,7 @@ class CloudWatch:
         '''
         results = []
         numberOfDataPoints = 0
-        averageMissRate = 0.0
+        sumMissRate = 0.0
         for instance in instances:
             result = self.cloudClient.get_metric_statistics(
                 Namespace = 'ece1779/a2',
@@ -62,7 +62,32 @@ class CloudWatch:
                 Unit = 'Percent'
             )
             results.append(result)
-        print(results)
-
-        return averageMissRate
+        for result in results:
+            datapoint = result['Datapoints']
+            #The datapoints for this instance is 0
+            #It either not initialized or has not sent any data yet
+            if len(datapoint) == 0:
+                continue
+            elif len(datapoint) == 1:
+                numberOfDataPoints = numberOfDataPoints + 1
+                print(datapoint[0]['Maximum'])
+                sumMissRate = sumMissRate + datapoint[0]['Maximum']
+            #There maybe two datapoints, need to get the latest one
+            else:
+                numberOfDataPoints = numberOfDataPoints + 1
+                datapoints = result['Datapoints']
+                timeStamps = []
+                for point in datapoints:
+                    timeStamps.append(point['Timestamp'])
+                timeStamps = timeStamps.sort()
+                for point in datapoints:
+                    if point['Timestamp'] == timeStamps[-1]:
+                        sumMissRate = sumMissRate + point['Maximum']
+                        break
+        #There is no datapoint at cloud watch
+        if numberOfDataPoints == 0:
+            print("No Datapoint at cloud watch")
+            return 0.0
+        else:
+            return sumMissRate/numberOfDataPoints
 
