@@ -106,6 +106,8 @@ def switch_manual_mode():
         try:
             # cloud_watch_task.join()
             stop_event.set()
+            cloud_watch_task.join()
+            stop_event.clear()
             response = jsonify({
                 "success":"true",
                 "status":200
@@ -171,7 +173,9 @@ def auto_scaler_config():
                 })
         else:
             try:
+                stop_event.set()
                 cloud_watch_task.join()
+                stop_event.clear()
                 cloud_watch_task.start()
                 response = jsonify({
                     "success":"true",
