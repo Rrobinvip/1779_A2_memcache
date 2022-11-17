@@ -2,6 +2,7 @@ import boto3
 from manager_app.config import Config
 from frontend.config import LOCAL_UPLOADS_DIR, LOCAL_CACHE_DIR, LOCAL_S3_DL_DIR
 import os
+import time
 
 class AWSController:
     ec2_resource = None
@@ -108,6 +109,7 @@ class AWSController:
                     for i in self.instance_list:
                         if i.state['Name'] == 'stopped':
                             i.start()
+                            time.sleep(1)
                             self.reload_instance_status()
                             break
                     operation_success = True
@@ -117,9 +119,12 @@ class AWSController:
                     return {"status_code":400, "operation_type":"ratio shrink", "message":"operation failed"}
                 print(" - scaler.aws v:range :{}".format(number_of_running_instances-executing_time))
                 for c in range(number_of_running_instances-executing_time):
+                    print(" - scaler.aws : inside {} stopping.. ".format(c))
                     for i in self.instance_list:
                         if i.state['Name'] == 'running':
                             i.stop()
+                            time.sleep(1)
+                            print(" - scaler.aws : stopped one instance {}".format(i.id))
                             self.reload_instance_status()
                             break
                 operation_success = True
