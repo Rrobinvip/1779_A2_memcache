@@ -76,6 +76,7 @@ class CloudWatch:
                 sumMissRate = sumMissRate + datapoint[0]['Maximum']
             #There maybe two datapoints, need to get the latest one
             else:
+                print("-----------------------------Data Points are More than 1----------------------")
                 numberOfDataPoints = numberOfDataPoints + 1
                 datapoints = result['Datapoints']
                 timeStamps = []
