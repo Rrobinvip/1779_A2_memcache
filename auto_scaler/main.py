@@ -51,7 +51,7 @@ def expand(expandRatio):
     #calculate the number to expand
     currentActiveInstances = aws_controller.activate_instances()
     currentActiveNumber = len(currentActiveInstances)
-    targetActiveNumber =  round(currentActiveNumber*expandRatio)
+    targetActiveNumber =  int(currentActiveNumber*expandRatio)
     if targetActiveNumber > MAX_INSTANCE_LIMIT:
         targetActiveNumber = MAX_INSTANCE_LIMIT
     if targetActiveNumber < MIN_INSTANCE_LIMIT:
@@ -72,7 +72,7 @@ def expand(expandRatio):
 def shrink(shrinkRatio):
     currentActiveInstances = aws_controller.activate_instances()
     currentActiveNumber = len(currentActiveInstances)
-    targetActiveNumber = round(currentActiveNumber * shrinkRatio)
+    targetActiveNumber = int(currentActiveNumber * shrinkRatio)
     if targetActiveNumber > MAX_INSTANCE_LIMIT:
         targetActiveNumber = MAX_INSTANCE_LIMIT
     if targetActiveNumber < MIN_INSTANCE_LIMIT:

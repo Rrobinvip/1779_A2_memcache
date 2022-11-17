@@ -72,6 +72,7 @@ class AWSController:
                 for i in self.instance_list:
                     if i.state['Name'] == 'stopped':
                         i.start()
+                        self.reload_instance_status()
                         opertion_success = True
                         break
             else:
@@ -81,6 +82,7 @@ class AWSController:
                 for i in self.instance_list:
                     if i.state['Name'] == 'running':
                         i.stop()
+                        self.reload_instance_status()
                         opertion_success = True
                         break
             if opertion_success:
@@ -106,6 +108,7 @@ class AWSController:
                         for i in self.instance_list:
                             if i.state['Name'] == 'stopped':
                                 i.start()
+                                self.reload_instance_status()
                     operation_success = True
             else:
                 if number_of_running_instances//2 >= 0:
@@ -113,6 +116,7 @@ class AWSController:
                         for i in self.instance_list:
                             if i.state['Name'] == 'running':
                                 i.stop()
+                                self.reload_instance_status()
                     operation_success = True
             
             if operation_success:
