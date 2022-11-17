@@ -58,7 +58,7 @@ class CloudWatch:
                 StartTime = datetime.datetime.utcnow() - datetime.timedelta(seconds = 60),
                 EndTime = datetime.datetime.utcnow(),
                 Period = 60,
-                Statistics = ['Maximum'],
+                Statistics = ['Average'],
                 Unit = 'Percent'
             )
             results.append(result)
@@ -70,23 +70,10 @@ class CloudWatch:
             #It either not initialized or has not sent any data yet
             if len(datapoint) == 0:
                 continue
-            elif len(datapoint) == 1:
+            else :
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Maximum'])
-                sumMissRate = sumMissRate + datapoint[0]['Maximum']
-            #There maybe two datapoints, need to get the latest one
-            else:
-                print("-----------------------------Data Points are More than 1----------------------")
-                numberOfDataPoints = numberOfDataPoints + 1
-                datapoints = result['Datapoints']
-                timeStamps = []
-                for point in datapoints:
-                    timeStamps.append(point['Timestamp'])
-                timeStamps = timeStamps.sort()
-                for point in datapoints:
-                    if point['Timestamp'] == timeStamps[-1]:
-                        sumMissRate = sumMissRate + point['Maximum']
-                        break
+                print(datapoint[0]['Average'])
+                sumMissRate = sumMissRate + datapoint[0]['Average']
         #There is no datapoint at cloud watch
         if numberOfDataPoints == 0:
             print("No Datapoint at cloud watch")
