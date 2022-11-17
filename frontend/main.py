@@ -53,30 +53,7 @@ sql_connection = Data()
 
 running_instance = aws_controller.get_ip_address()
 hash_mapper = PoolHashingAllocator(len(running_instance))
-
-handshakeIndicator = False
-
-def handshake():
-    global handshakeIndicator
-    while True:
-        if not handshakeIndicator:
-            continue
-        else:
-            time.sleep(0.5)
-            activeIPAddress = aws_controller.get_ip_address().values()
-            for address in activeIPAddress:
-                url = "http://"+address+":5000/handshake"
-                print("Calling URL {}".format(url))
-                response = requests.get(url, timeout=1)
-                print(response)
-                time.sleep(0.2)
-            handshakeIndicator = False
-
-handshakeThread = threading.Thread(target = handshake)
-handshakeThread.start()
             
-
-
 @app.route('/')
 def main():
     return redirect(url_for("upload_picture"))
@@ -516,14 +493,5 @@ def api_upload():
                     "message":"Unknown error"
                 }
         })
-
-@app.route("/handshake", methods = ["GET"])
-def handshake():
-    global handshakeIndicator
-    handshakeIndicator = True
-    return jsonify({
-        "success":"true",
-        "status":200
-    })
 
             
