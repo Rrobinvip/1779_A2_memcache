@@ -67,6 +67,7 @@ def handshake():
             for address in activeIPAddress:
                 url = "http://"+address+":5000/handshake"
                 response = requests.get(url, timeout=0.5)
+                time.sleep(0.2)
             handshakeIndicator = False
 
 handshakeThread = threading.Thread(target = handshake)
