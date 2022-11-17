@@ -66,7 +66,9 @@ def handshake():
             activeIPAddress = aws_controller.get_ip_address().values()
             for address in activeIPAddress:
                 url = "http://"+address+":5000/handshake"
-                response = requests.get(url, timeout=0.5)
+                print("Calling URL {}".format(url))
+                response = requests.get(url, timeout=1)
+                print(response)
                 time.sleep(0.2)
             handshakeIndicator = False
 
