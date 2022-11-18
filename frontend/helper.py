@@ -4,7 +4,7 @@ import os
 import base64
 from datetime import datetime
 
-def api_call_ipv4(ipv4, type, commend, params=None):
+def api_call_ipv4(ipv4, type, commend, params=None, timeout=0.5):
     '''
     This function is used to use the api. \n
     The flag will need to be updated in the future to accommodate different api's.
@@ -14,12 +14,12 @@ def api_call_ipv4(ipv4, type, commend, params=None):
     print(" - frontend.helper.api_call: ", url)
     if type == "GET":
         try:
-            return requests.get(url, params, timeout=0.5)
+            return requests.get(url, params, timeout=timeout)
         except requests.exceptions.RequestException as ce:
             return None
     elif type == "POST":
         try:
-            return requests.post(url, params, timeout=0.5)
+            return requests.post(url, params, timeout=timeout)
         except requests.exceptions.RequestException as ce:
             return None
 
