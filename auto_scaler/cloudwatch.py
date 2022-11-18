@@ -93,7 +93,7 @@ class CloudWatch:
                 Unit = 'Percent'
             )
             results.append(result)
-        print(results)
+        # print(results)
         for result in results:
             datapoint = result['Datapoints']
             print("Datapoint: {}".format(datapoint))
@@ -103,11 +103,11 @@ class CloudWatch:
                 continue
             else :
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Average'])
+                # print(datapoint[0]['Average'])
                 sumMissRate = sumMissRate + datapoint[0]['Average']
         #There is no datapoint at cloud watch
         if numberOfDataPoints == 0:
-            print("No Datapoint at cloud watch")
+            # print("No Datapoint at cloud watch")
             return 0.0
         else:
             return sumMissRate/numberOfDataPoints

@@ -78,7 +78,7 @@ class CloudWatch:
         results = []
         numberOfDataPoints = 0
         sumMissRate = 0.0
-        print(" - manager.cloudwatch: Miss rate:")
+        # print(" - manager.cloudwatch: Miss rate:")
         
         for instance in instances:
             result = self.cloudClient.get_metric_statistics(
@@ -105,14 +105,14 @@ class CloudWatch:
                 continue
             else :
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Average'])
+                # print(datapoint[0]['Average'])
                 sumMissRate = sumMissRate + datapoint[0]['Average']
         #There is no datapoint at cloud watch
         if numberOfDataPoints == 0:
-            print("No Datapoint at cloud watch")
+            # print("No Datapoint at cloud watch")
             return 0.0
         else:
-            print( "\t - manager.cloudwatch : v:sumMissRate {} v:numberOfDataPoints {}".format(sumMissRate, numberOfDataPoints))
+            # print( "\t - manager.cloudwatch : v:sumMissRate {} v:numberOfDataPoints {}".format(sumMissRate, numberOfDataPoints))
             return sumMissRate/numberOfDataPoints
     
     def get_hit_rate(self, instances):
@@ -125,7 +125,7 @@ class CloudWatch:
         results = []
         numberOfDataPoints = 0
         sumHitRate = 0.0
-        print(" - manager.cloudwatch: Hit rate:")
+        # print(" - manager.cloudwatch: Hit rate:")
         for instance in instances:
             result = self.cloudClient.get_metric_statistics(
                 Namespace = 'ece1779/a2',
@@ -145,19 +145,19 @@ class CloudWatch:
         # print(results)
         for result in results:
             datapoint = result['Datapoints']
-            print("Datapoint : {}".format(datapoint))
+            # print("Datapoint : {}".format(datapoint))
 
             if len(datapoint) == 0:
                 continue
             else:
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Average'])
+                # print(datapoint[0]['Average'])
                 sumHitRate = sumHitRate + datapoint[0]['Average']
         if numberOfDataPoints == 0:
-            print("No Hit Rate Datapoint at cloud watch")
+            # print("No Hit Rate Datapoint at cloud watch")
             return 0.0
         else:
-            print( "\t - manager.cloudwatch : v:sumHitRate {} v:numberOfDataPoints {}".format(sumHitRate, numberOfDataPoints))
+            # print( "\t - manager.cloudwatch : v:sumHitRate {} v:numberOfDataPoints {}".format(sumHitRate, numberOfDataPoints))
             return sumHitRate/numberOfDataPoints
     
     def get_number_of_item(self, instances):
@@ -170,7 +170,7 @@ class CloudWatch:
         results = []
         numberOfDataPoints = 0
         sumNumber = 0.0
-        print(" - manager.cloudwatch: # of item:")
+        # print(" - manager.cloudwatch: # of item:")
         
         for instance in instances:
             result = self.cloudClient.get_metric_statistics(
@@ -191,19 +191,19 @@ class CloudWatch:
         # print(results)
         for result in results:
             datapoint = result['Datapoints']
-            print("Datapoint : {}".format(datapoint))
+            # print("Datapoint : {}".format(datapoint))
 
             if len(datapoint) == 0:
                 continue
             else:
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Average'])
+                # print(datapoint[0]['Average'])
                 sumNumber = sumNumber + datapoint[0]['Average']
             if numberOfDataPoints == 0:
-                print("No Number of Item Datapoint at cloud watch")
+                # print("No Number of Item Datapoint at cloud watch")
                 return 0.0
             else:
-                print( "\t - manager.cloudwatch : v:sumNumber {} v:numberOfDataPoints {}".format(sumNumber, numberOfDataPoints))
+                # print( "\t - manager.cloudwatch : v:sumNumber {} v:numberOfDataPoints {}".format(sumNumber, numberOfDataPoints))
                 return sumNumber/numberOfDataPoints
     
     def get_total_size_of_item(self, instances):
@@ -216,7 +216,7 @@ class CloudWatch:
         results = []
         numberOfDataPoints = 0
         sumSize = 0.00
-        print(" - manager.cloudwatch: total size of item:")
+        # print(" - manager.cloudwatch: total size of item:")
         for instance in instances:
             result = self.cloudClient.get_metric_statistics(
                 Namespace = 'ece1779/a2',
@@ -236,19 +236,19 @@ class CloudWatch:
         # print(results)
         for result in results:
             datapoint = result['Datapoints']
-            print("Datapoint: {}".format(datapoint))
+            # print("Datapoint: {}".format(datapoint))
 
             if len(datapoint) == 0:
                 continue
             else:
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Average'])
+                # print(datapoint[0]['Average'])
                 sumSize = sumSize + datapoint[0]['Average']
             if numberOfDataPoints == 0:
-                print("No Total Size Datapoint at cloud watch")
+                # print("No Total Size Datapoint at cloud watch")
                 return 0
             else:
-                print( "\t - manager.cloudwatch : v:sumSize {} v:numberOfDataPoints {}".format(sumSize, numberOfDataPoints))
+                # print( "\t - manager.cloudwatch : v:sumSize {} v:numberOfDataPoints {}".format(sumSize, numberOfDataPoints))
                 return sumSize/numberOfDataPoints
     
     def get_total_number_of_requests(self, instances):
@@ -261,7 +261,7 @@ class CloudWatch:
         results = []
         numberOfDataPoints = 0
         numberOfRequest = 0.00
-        print(" - manager.cloudwatch: total size of item:")
+        # print(" - manager.cloudwatch: total size of item:")
         for instance in instances:
             result = self.cloudClient.get_metric_statistics(
                 Namespace = 'ece1779/a2',
@@ -281,19 +281,19 @@ class CloudWatch:
         # print(results)
         for result in results:
             datapoint = result['Datapoints']
-            print("Datapoint : {}".format(datapoint))
+            # print("Datapoint : {}".format(datapoint))
 
             if len(datapoint) == 0:
                 continue
             else:
                 numberOfDataPoints = numberOfDataPoints + 1
-                print(datapoint[0]['Average'])
+                # print(datapoint[0]['Average'])
                 numberOfRequest = numberOfRequest + datapoint[0]['Average']
             if numberOfRequest == 0:
-                print("No Request Number Datapoint at cloud watch")
+                # print("No Request Number Datapoint at cloud watch")
                 return 0
             else:
-                print( "\t - manager.cloudwatch : v:# requests {} v:numberOfDataPoints {}".format(numberOfRequest, numberOfDataPoints))
+                # print( "\t - manager.cloudwatch : v:# requests {} v:numberOfDataPoints {}".format(numberOfRequest, numberOfDataPoints))
                 return numberOfRequest/numberOfDataPoints
 
 
