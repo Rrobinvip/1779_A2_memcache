@@ -151,7 +151,7 @@ class CloudWatch:
         print(results)
         for result in results:
             datapoint = result['Datapoints']
-            print("Datapoint : {]".format(datapoint))
+            print("Datapoint : {}".format(datapoint))
 
             if len(datapoint) == 0:
                 continue
