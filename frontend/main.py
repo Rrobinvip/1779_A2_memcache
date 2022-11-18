@@ -44,6 +44,10 @@ from frontend.pool_hashing import PoolHashingAllocator
 # Get master ip
 from ec2_metadata import ec2_metadata
 
+# Get cloudwatch client
+from auto_scaler.cloudwatch import CloudWatch
+cloudwatch = CloudWatch()
+
 '''
 **IMPORTANT!** instances doesn't updat their status automatically. Call `aws_controller.reload_instance_status()` every time befroe any
 operations on instance. Also updating running_instance with `aws_controller.get_ip_address` is mandetory. 

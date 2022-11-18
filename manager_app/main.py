@@ -70,9 +70,10 @@ def go_upload():
 @app.route("/status")
 def status():
     status_dic = aws_controller.get_instances_status()
-    data = data_aggregation.get_data()
+    # data = data_aggregation.get_data()
+    images = cloud_watch.get_metrics_image()
     
-    return render_template("status.html", tag1_selected=True, status_dic=status_dic, items=data)
+    return render_template("status.html", tag1_selected=True, status_dic=status_dic, images=images)
 
 # TODO: need to update config and api_call to make them call instances. 
 #       1. Acquire instances ipv4 address to make call.
