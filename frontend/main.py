@@ -392,10 +392,11 @@ def api_list_keys():
 def api_key_search(key_value):
     #call backend
     print(" - Frontend.api_key_search: v:key_value", key_value)
-    data = api_call("GET","get",{"key":key_value})
+    
+    data = api_call("127.0.0.1:5000/", "GET", "search", {"key":key_value}, timeout=2)
 
     #If the backend misses, look up the database
-    if data.status_code == 400:
+    if data == None or (data != None and data.status_code) == 400:
         result = sql_connection.search_key(key_value)
         #if the key does not exist in database, return error message
         if len(result) == 0:
@@ -458,14 +459,37 @@ def api_upload():
         value = image_encoder(filename, 'uploads')
         upload_time = current_datetime()
         parms = {"key":key,"value":value,"upload_time":upload_time}
-        result = api_call("POST","put",parms)
+        
+        running_instance = aws_controller.get_ip_address()
+        hash_mapper.set_number_nodes(len(running_instance))
+        
+        instance_index_to_assign_key_value, partition = hash_mapper.get_hash_region(key)
 
-        if result.status_code == 200:
-            print("Memcache image stored")
+        # Upload the file to s3.
+        aws_controller.add_file_s3(filename)
+        
+        if instance_index_to_assign_key_value != -1:
+            print(" - Frontend.main.upload api : index of instance to upload at {} in {}, partition {}".format(instance_index_to_assign_key_value, running_instance, partition))
+
+            running_instance_ips = list(running_instance.values())
+            connection_test_result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "GET", "test")
+            if connection_test_result != None and connection_test_result.status_code == 200:
+                print(" - Frontend.main.upload_picture api : connection to desire instance at {} success, start to upload picture.".format(running_instance_ips[instance_index_to_assign_key_value]))
+                result = api_call_ipv4(running_instance_ips[instance_index_to_assign_key_value]+":5000", "POST", "put", parms)
+            else:
+                print(" - Frontend.main.upload_picture api : Cannot establish connection to {}, abort.".format(running_instance_ips[instance_index_to_assign_key_value]))
         else:
-            print("Memcache error")
+            print(" - Frontend.main.upload_picture api : No running instances. Image will go to S3. # running instance: {}".format(len(running_instance)))
+
+        if result != None and result.status_code == 200:
+            print(" - Frontend.main.upload_picture api : backend stores image into memcache.")
+        else:
+            print(" - Frontend.main.upload_picture api : memcache failed to store image for some reason. Check message from 'backend.memcache.*' for more help. Image will still be stored in S3. ")
         
         sql_connection.add_entry(key,filename)
+        
+        remove_file(filename)
+        
         return jsonify({
             "success":"true"
         })
