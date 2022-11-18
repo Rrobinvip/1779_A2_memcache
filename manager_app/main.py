@@ -47,12 +47,6 @@ def get_chart_data_thread():
         current_time = current_datetime()
         data_aggregation.add_entry([hitRate, missRate, numberOfItem, sizeOfItem, numberOfRequest, current_time])
 
-        print(" - Manager.main.get_chart_data_thread: printing infomation..")
-        print("\tHit Rate: {}".format(chart.get_hitRate()))
-        print("\tMiss rate: {}".format(chart.get_missRate()))
-        print("\tNumber Of Item: {}".format(chart.get_number_of_item()))
-        print("\tSize Of Item: {}".format(chart.get_total_size()))
-        print("\tNumber of Request: {}".format(chart.get_number_of_request()))
         time.sleep(60)
 
 chart_task = threading.Thread(target = get_chart_data_thread)
@@ -219,10 +213,10 @@ def delete_data():
             result = api_call(url, "GET", "clear")
             print(e)
     
-    aws_controller.clear_s3()
-    sql_connection.delete_all_entries()
+        aws_controller.clear_s3()
+        sql_connection.delete_all_entries()
 
-    flash("All data deleted.")
+        flash("All data deleted.")
 
     return render_template("delete.html", form2=delete_form, tag3_selected=True)
 
@@ -238,7 +232,7 @@ def clear_memcache():
             url = e+":5000/"
             result = api_call(url, "GET", "clear")
             print(e)
-    flash("All memcache cleared.")
+        flash("All memcache cleared.")
 
     return render_template("clear.html", form2=clear_form, tag4_selected=True)
 
