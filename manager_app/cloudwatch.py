@@ -230,7 +230,7 @@ class CloudWatch:
                 EndTime = datetime.datetime.utcnow(),
                 Period = 60,
                 Statistics = ['Average'],
-                Units = 'Count'
+                Unit = 'Count'
             )
             results.append(result)
         print("---------------Number of Request----------------")
