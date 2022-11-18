@@ -4,35 +4,60 @@
 
 {% block content%}
     <div class="col-12 mx-auto mt-5">
-        <h1 class="mb-5"> Memcache status </h1>
-        {% if items %}
+        <h1 class="mb-5"> Instances status </h1>
+        {% if status_dic %}
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col"># of items</th>
-                    <th scope="col">size of items (~ MB)</th>
-                    <th scope="col"># of requests (Search request)</th>
-                    <th scope="col">miss rate</th>
-                    <th scope="col">hit rate</th>
-                    <th scope="col">datetime</th>
+                    <th scope="col">Instance ID</th>
+                    <th scope="col">Instance Status</th>
                 </tr>
             </thead>
             <tbody>
-                {% for item in items %}
+                {% for key in status_dic %}
                 <tr>
-                    <th scope="row">{{item[1]}}</th>
-                    <td>{{item[2]}}</td>
-                    <td>{{item[3]}}</td>
-                    <td>{{item[4]}}</td>
-                    <td>{{item[5]}}</td>
-                    <td>{{item[6]}}</td>
+                    <th scope="row">{{ key }}</th>
+                    <td>{{ status_dic[key] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
         <div class="alert alert-warning" role="alert">
-            There are no status recorded in DB. 
+            Empty
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-12 mx-auto mt-5">
+        <h1 class="mb-5"> Memcache status (in avg.)</h1>  
+        {% if items %}
+        <table class="table">
+            <thead>
+                <tr>           
+                    <th scope="col">hit rate</th>
+                    <th scope="col">miss rate</th>
+                    <th scope="col"># of items</th>
+                    <th scope="col">size of items (~ MB)</th>
+                    <th scope="col"># of requests (Search request)</th>
+                    <th scope="col">datetime</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <th scope="row">{{item[0]}}</th>
+                    <td>{{item[1]}}</td>
+                    <td>{{item[2]}}</td>
+                    <td>{{item[3]}}</td>
+                    <td>{{item[4]}}</td>
+                    <td>{{item[5]}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            There are no status recorded. 
         </div>
         {% endif %}
     </div>

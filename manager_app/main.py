@@ -11,7 +11,7 @@ import time
 from manager_app.form import ConfigForm, ClearForm, DeleteForm, ManualForm, AutoForm
 
 # Import helper
-from manager_app.helper import api_call
+from manager_app.helper import api_call, current_datetime
 
 # Import aws controller
 from manager_app.aws import AWSController
@@ -26,8 +26,9 @@ from manager_app.cloudwatch import CloudWatch
 cloud_watch = CloudWatch()
 
 # Import Chart Data
-from manager_app.chart import Chart
+from manager_app.chart import Chart, DataAggregation
 chart = Chart()
+data_aggregation = DataAggregation()
 
 def get_chart_data_thread():
     while True:
@@ -36,15 +37,22 @@ def get_chart_data_thread():
         numberOfItem = cloud_watch.get_number_of_item(instances)
         sizeOfItem = cloud_watch.get_total_size_of_item(instances)
         numberOfRequest = cloud_watch.get_total_number_of_requests(instances)
+        missRate = cloud_watch.get_miss_rate(instances)
+        chart.set_missRate(missRate)
         chart.set_hitRate(hitRate)
         chart.set_number_of_item(numberOfItem)
         chart.set_total_size(sizeOfItem)
         chart.set_number_of_request(numberOfRequest)
+        
+        current_time = current_datetime()
+        data_aggregation.add_entry([hitRate, missRate, numberOfItem, sizeOfItem, numberOfRequest, current_time])
 
-        print("Hit Rate: {}".format(chart.get_hitRate()))
-        print("Number Of Item: {}".format(chart.get_number_of_item()))
-        print("Size Of Item: {}".format(chart.get_total_size()))
-        print("Number of Request: {}".format(chart.get_number_of_request()))
+        print(" - Manager.main.get_chart_data_thread: printing infomation..")
+        print("\tHit Rate: {}".format(chart.get_hitRate()))
+        print("\tMiss rate: {}".format(chart.get_missRate()))
+        print("\tNumber Of Item: {}".format(chart.get_number_of_item()))
+        print("\tSize Of Item: {}".format(chart.get_total_size()))
+        print("\tNumber of Request: {}".format(chart.get_number_of_request()))
         time.sleep(60)
 
 chart_task = threading.Thread(target = get_chart_data_thread)
@@ -61,7 +69,10 @@ def go_upload():
 
 @app.route("/status")
 def status():
-    return render_template("status.html", tag1_selected=True)
+    status_dic = aws_controller.get_instances_status()
+    data = data_aggregation.get_data()
+    
+    return render_template("status.html", tag1_selected=True, status_dic=status_dic, items=data)
 
 # TODO: need to update config and api_call to make them call instances. 
 #       1. Acquire instances ipv4 address to make call.
