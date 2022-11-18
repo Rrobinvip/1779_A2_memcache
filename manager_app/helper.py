@@ -13,9 +13,15 @@ def api_call(ipv4, type, commend, params=None, timeout=0.5):
     url = request_url+commend
     print(" - Manager.helper.api_call: ", url)
     if type == "GET":
-        return requests.get(url, params, timeout=timeout)
+        try:
+            return requests.get(url, params, timeout=0.5)
+        except requests.exceptions.RequestException as ce:
+            return None
     elif type == "POST":
-        return requests.post(url, params, timeout=timeout)
+        try:
+            return requests.post(url, params, timeout=0.5)
+        except requests.exceptions.RequestException as ce:
+            return None
 
 def current_datetime():
     '''

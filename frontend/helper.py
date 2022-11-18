@@ -15,12 +15,12 @@ def api_call_ipv4(ipv4, type, commend, params=None):
     if type == "GET":
         try:
             return requests.get(url, params, timeout=0.5)
-        except ConnectionError as ce:
+        except requests.exceptions.RequestException as ce:
             return None
     elif type == "POST":
         try:
             return requests.post(url, params, timeout=0.5)
-        except ConnectionError as ce:
+        except requests.exceptions.RequestException as ce:
             return None
 
 def api_call(type, commend, params=None):

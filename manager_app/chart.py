@@ -53,9 +53,9 @@ class DataAggregation():
         
     def add_entry(self, data):
         if len(self.data_list) == 30:
-            self.data_list.pop(0)
+            self.data_list.pop()
         
-        self.data_list.append(data)
+        self.data_list.insert(0, data)
         
     def get_data(self):
         return self.data_list
