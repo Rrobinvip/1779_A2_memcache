@@ -233,8 +233,8 @@ class CloudWatch:
                 Unit = 'Count'
             )
             results.append(result)
-        print("---------------Number of Request----------------")
-        print(results)
+        # print("---------------Number of Request----------------")
+        # print(results)
         for result in results:
             datapoint = result['Datapoints']
             print("Datapoint : {}".format(datapoint))
