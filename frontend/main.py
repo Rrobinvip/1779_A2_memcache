@@ -215,6 +215,8 @@ def search_key():
             if len(data) == 0:
                 print("\t DB doesn't hold this value. Search end.")
                 flash("No image with this key.")
+                if request.method == "GET" and "flag" in request.args:
+                    return jsonify({"value":None}), 400
             else:
                 filename = data[0][2]
                 upload_time = data[0][3]
@@ -226,10 +228,13 @@ def search_key():
                 value = image_encoder(filename, 's3')
                 parms = {"key":key, "value":value, "upload_time":upload_time}
                 result = api_call_ipv4(running_instance_ips[instance_index_to_search]+":5000", "POST", "put", parms)
-
+                
                 remove_s3_cache(filename)
                 
                 filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
+                
+                if request.method == "GET" and "flag" in request.args:
+                    return jsonify({"value":filename}), 200
 
                 if result != None and result.status_code == 200:
                     print(" - Frontend: backend stores image into memcache.")
@@ -244,16 +249,24 @@ def search_key():
             if len(data) == 0:
                 print("\t DB doesn't hold this value. Search end.")
                 flash("No image with this key.")
+                if request.method == "GET" and "flag" in request.args:
+                    return jsonify({"value":None}), 400
             else:
                 filename = data[0][2]
                 upload_time = data[0][3]
                 print("Filename: {} upload_time: {}".format(filename, upload_time))
                 filename = 'https://{}.s3.amazonaws.com/{}'.format(Config.BUCKET_NAME, filename)
+                
+                if request.method == "GET" and "flag" in request.args:
+                    return jsonify({"value":filename}), 200
 
         elif data != None and data.status_code == 200:
             data = data.json()
             value = data["value"]
             upload_time = data["upload_time"]
+            
+            if request.method == "GET" and "flag" in request.args:
+                    return jsonify({"value":value}), 200
 
             # Add datetime prefix to image cache file.
             date_prefix = current_datetime()
@@ -393,7 +406,7 @@ def api_key_search(key_value):
     #call backend
     print(" - Frontend.api_key_search: v:key_value", key_value)
     
-    data = api_call_ipv4("127.0.0.1:5000/", "GET", "search", {"key":key_value}, timeout=2)
+    data = api_call_ipv4("127.0.0.1:5000/", "GET", "search", {"key":key_value, "flag":1}, timeout=2)
 
     #If the backend misses, look up the database
     if data == None or (data != None and data.status_code) == 400:
