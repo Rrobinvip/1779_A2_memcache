@@ -209,7 +209,7 @@ def automatic_resizing():
 @app.route("/delete", methods=["GET", "POST"])
 def delete_data():
     delete_form = DeleteForm()
-    print("DELETE all data")
+    print(" * DELETE all data")
 
     if request.method == "POST" and delete_form.validate_on_submit():
         ip_address = aws_controller.get_ip_address()
@@ -222,11 +222,14 @@ def delete_data():
     aws_controller.clear_s3()
     sql_connection.delete_all_entries()
 
+    flash("All data deleted.")
+
     return render_template("delete.html", form2=delete_form, tag3_selected=True)
 
 @app.route("/clear_memcache", methods=["GET", "POST"])
 def clear_memcache():
     clear_form = ClearForm()
+    print(" * Clear memcache")
 
     if request.method == "POST" and clear_form.validate_on_submit():
         ip_address = aws_controller.get_ip_address()
@@ -235,6 +238,7 @@ def clear_memcache():
             url = e+":5000/"
             result = api_call(url, "GET", "clear")
             print(e)
+    flash("All memcache cleared.")
 
     return render_template("clear.html", form2=clear_form, tag4_selected=True)
 
