@@ -1,15 +1,19 @@
+from manager_app.helper import current_datetime
+
 
 class Chart:
     hitRate = None
     numberOfItem = None
     totalSize = None
     numberOfRequest = None
+    missRate = None
 
     def __init__(self):
         self.hitRate = 0.0
         self.numberOfItem = 0.0
         self.totalSize = 0.0
         self.numberOfRequest = 0.0
+        self.missRate = 0.0
     
     def set_hitRate(self, hitRate):
         self.hitRate = hitRate
@@ -34,3 +38,24 @@ class Chart:
     
     def get_number_of_request(self):
         return self.numberOfRequest
+    
+    def set_missRate(self, missRate):
+        self.missRate = missRate
+        
+    def get_missRate(self):
+        return self.missRate
+    
+class DataAggregation():
+    data_list = None
+    
+    def __init__(self):
+        self.data_list = []
+        
+    def add_entry(self, data):
+        if len(self.data_list) == 30:
+            self.data_list.pop(0)
+        
+        self.data_list.append(data)
+        
+    def get_data(self):
+        return self.data_list
