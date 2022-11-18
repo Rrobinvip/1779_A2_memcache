@@ -393,7 +393,7 @@ def api_key_search(key_value):
     #call backend
     print(" - Frontend.api_key_search: v:key_value", key_value)
     
-    data = api_call("127.0.0.1:5000/", "GET", "search", {"key":key_value}, timeout=2)
+    data = api_call_ipv4("127.0.0.1:5000/", "GET", "search", {"key":key_value}, timeout=2)
 
     #If the backend misses, look up the database
     if data == None or (data != None and data.status_code) == 400:
