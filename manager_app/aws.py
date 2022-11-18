@@ -180,3 +180,18 @@ class AWSController:
     def download_file(self, filename):
         final_path = os.path.join(LOCAL_S3_DL_DIR, filename)
         self.s3_client.download_file(Config.BUCKET_NAME, filename, final_path)
+        
+    def activate_instances(self):
+        '''
+        return a list of all running instances
+        '''
+        self.reload_instance_status()
+
+        results = []
+
+        for i in self.instance_list:
+            if i.state['Name'] == 'running':
+                results.append(i.id)
+        
+        return results
+        

@@ -31,10 +31,11 @@ chart = Chart()
 
 def get_chart_data_thread():
     while True:
-        hitRate = cloud_watch.get_hit_rate()
-        numberOfItem = cloud_watch.get_number_of_item()
-        sizeOfItem = cloud_watch.get_total_size_of_item()
-        numberOfRequest = cloud_watch.get_total_number_of_requests()
+        instances = aws_controller.activate_instances()
+        hitRate = cloud_watch.get_hit_rate(instances)
+        numberOfItem = cloud_watch.get_number_of_item(instances)
+        sizeOfItem = cloud_watch.get_total_size_of_item(instances)
+        numberOfRequest = cloud_watch.get_total_number_of_requests(instances)
         chart.set_hitRate(hitRate)
         chart.set_number_of_item(numberOfItem)
         chart.set_total_size(sizeOfItem)
