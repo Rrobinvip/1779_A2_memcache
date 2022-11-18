@@ -4,6 +4,8 @@ from flask import flash, jsonify
 import requests
 from glob import escape
 from decimal import Decimal
+import threading
+import time
 
 # Import Forms
 from manager_app.form import ConfigForm, ClearForm, DeleteForm, ManualForm, AutoForm
@@ -18,6 +20,35 @@ aws_controller = AWSController()
 # Import SQL
 from manager_app.data import Data
 sql_connection = Data()
+
+# Import Cloud Watch
+from manager_app.cloudwatch import CloudWatch
+cloud_watch = CloudWatch()
+
+# Import Chart Data
+from manager_app.chart import Chart
+chart = Chart()
+
+def get_chart_data_thread():
+    while True:
+        hitRate = cloud_watch.get_hit_rate()
+        numberOfItem = cloud_watch.get_number_of_item()
+        sizeOfItem = cloud_watch.get_total_size_of_item()
+        numberOfRequest = cloud_watch.get_total_number_of_requests()
+        chart.set_hitRate(hitRate)
+        chart.set_number_of_item(numberOfItem)
+        chart.set_total_size(sizeOfItem)
+        chart.set_number_of_request(numberOfRequest)
+
+        print("Hit Rate: {}".format(chart.get_hitRate()))
+        print("Number Of Item: {}".format(chart.get_number_of_item()))
+        print("Size Of Item: {}".format(chart.get_total_size()))
+        print("Number of Request: {}".format(chart.get_number_of_request()))
+        time.sleep(60)
+
+chart_task = threading.Thread(target = get_chart_data_thread)
+chart_task.start()
+    
 
 @app.route("/")
 def manager_main():

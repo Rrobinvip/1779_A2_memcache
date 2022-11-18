@@ -1,7 +1,5 @@
-import time
 import datetime
 import boto3
-from manager_app.config import Config
 
 class CloudWatch:
     
