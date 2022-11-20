@@ -1,5 +1,18 @@
 # ECE 1779 A2 MEMCACHE - Group 17
 
+Assignment completed, will be tag with "ece1779-assignment-2.1". This is the final commit. 
+
+## To run
+Script must be executed with current shell with intergrated mode. In most cases, Ubuntu use BASH, and macOS use ZSH.
+`<shell> -i start.sh`
+
+To find out your shell with `echo $SHELL`.
+
+## To create environment:
+1. Create the environment from the `environment.yml` with `conda env create -f environment.yml`
+1. Activate the new environment with `conda activate <name_env>`, in this case, the `<name_env>` is `MEMCACHE`
+3. Inspect packages with `conda list`
+
 Nodes will run this flask instance to storage picture. [Node server](https://github.com/Rrobinvip/1779_A2_NodeServer)
 
 ## General requirements
