@@ -1,6 +1,4 @@
-# ECE 1779 A2 MEMCACHE - Group 17
-
-Assignment completed, will be tag with "ece1779-assignment-2.1". This is the final commit. 
+# ECE 1779 MEMCACHE - A File caching system simulates AWS auto scaling
 
 ## To run
 Script must be executed with current shell with intergrated mode. In most cases, Ubuntu use BASH, and macOS use ZSH.
